@@ -50,8 +50,7 @@ async def update_role(db: AsyncSession, role_id: UUID, data: dict) -> Role:
         if value is not None:
             setattr(role, key, value)
     await db.commit()
-    await db.refresh(role)
-    return role
+    return await get_role(db, role_id)
 
 
 async def set_role_permissions(db: AsyncSession, role_id: UUID, permission_ids: list[UUID]) -> Role:

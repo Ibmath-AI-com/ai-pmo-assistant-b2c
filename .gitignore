@@ -1,0 +1,41 @@
+# Claude AI commands - exclude from repo
+.claude
+plans/
+
+# Node modules - exclude from repo
+node_modules/
+# Build output - exclude from repo
+dist/       
+build/      
+# Logs - exclude from repo
+logs/
+*.log
+
+# Environment variables - exclude from repo
+.env
+.env.example
+.env.local
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# OS files - exclude from repo
+.DS_Store
+# IDE files - exclude from repo
+.vscode/
+
+
+# Project docs & schema
+CLAUDE.md
+PRD.md
+README.md
+Schema.sql
+SCP.md
+STRUCTURE.md
+DESIGN_SYSTEM.md
+

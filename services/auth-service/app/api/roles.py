@@ -114,8 +114,16 @@ async def create_role_endpoint(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     role = await create_role(db, body.model_dump())
-    role.permissions = []
-    return _serialize_role(role)
+    return {
+        "role_id": role.role_id,
+        "organization_id": role.organization_id,
+        "role_code": role.role_code,
+        "role_name": role.role_name,
+        "description": role.description,
+        "is_system_role": role.is_system_role,
+        "status": role.status,
+        "permissions": [],
+    }
 
 
 @router.put("/{role_id}", response_model=RoleResponse)
