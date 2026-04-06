@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Bell, MessageSquare, ChevronDown } from 'lucide-react'
+import { AppLogo } from '@/components/ui/AppLogo'
 
 const navLinks = [
   { label: 'Home', to: '/' },
@@ -16,10 +17,7 @@ export function Navbar() {
     >
       {/* Logo */}
       <div className="flex items-center gap-2 shrink-0">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <polygon points="14,2 26,8 26,20 14,26 2,20 2,8" fill="none" stroke="#3B82F6" strokeWidth="2" />
-          <polygon points="14,7 21,11 21,19 14,23 7,19 7,11" fill="#06B6D4" opacity="0.7" />
-        </svg>
+        <AppLogo size={28} />
         <span className="text-white font-bold text-[16px] tracking-tight">
           AI PMO & Strategy Assistant
         </span>

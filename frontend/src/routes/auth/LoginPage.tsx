@@ -1,22 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLogin } from '@/lib/hooks/useAuth'
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  backgroundColor: '#FFFFFF',
-  border: '1px solid #E5E7EB',
-  borderRadius: '8px',
-  padding: '10px 14px',
-  fontSize: '14px',
-  color: '#111827',
-  outline: 'none',
-  boxSizing: 'border-box',
-}
+import { AppLogo } from '@/components/ui/AppLogo'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [remember, setRemember] = useState(false)
   const { login, loading, error } = useLogin()
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,131 +14,263 @@ export function LoginPage() {
     login({ email, password })
   }
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    backgroundColor: '#D1D5DB',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '10px 14px',
+    fontSize: '14px',
+    color: '#111827',
+    outline: 'none',
+    boxSizing: 'border-box',
+  }
+
   return (
     <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: '#F1F5F9' }}
+      style={{
+        display: 'flex',
+        minHeight: '100vh',
+        width: '100vw',
+        backgroundColor: '#000000',
+        fontFamily: 'Inter, Segoe UI, sans-serif',
+      }}
     >
+      {/* ── Left Panel ── */}
       <div
-        className="w-full"
         style={{
-          maxWidth: '400px',
-          backgroundColor: '#FFFFFF',
-          borderRadius: '12px',
-          padding: '32px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          border: '1px solid #E5E7EB',
+          width: '40%',
+          backgroundColor: '#000000',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '48px 40px',
+          position: 'relative',
+          minWidth: 0,
         }}
+        className="left-panel"
       >
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-2 mb-8">
-          <svg width="40" height="40" viewBox="0 0 28 28" fill="none">
-            <polygon points="14,2 26,8 26,20 14,26 2,20 2,8" fill="none" stroke="#3B82F6" strokeWidth="2" />
-            <polygon points="14,7 21,11 21,19 14,23 7,19 7,11" fill="#06B6D4" opacity="0.7" />
-          </svg>
+        {/* Logo + name */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+          <AppLogo size={80} />
+
           <h1
-            className="font-bold text-center"
-            style={{ fontSize: '20px', color: '#111827', margin: 0 }}
+            style={{
+              color: '#FFFFFF',
+              fontSize: '22px',
+              fontWeight: 700,
+              textAlign: 'center',
+              margin: 0,
+              lineHeight: 1.3,
+            }}
           >
-            AI PMO & Strategy Assistant
+            AI PMO &amp; Strategy Assistant
           </h1>
-          <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>
-            Sign in to your account
-          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {error && (
-            <div
-              style={{
-                backgroundColor: '#FEF2F2',
-                border: '1px solid #FECACA',
-                borderRadius: '8px',
-                padding: '10px 14px',
-                fontSize: '13px',
-                color: '#DC2626',
-              }}
-            >
-              {error}
-            </div>
-          )}
-
-          <div className="flex flex-col gap-1">
-            <label style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>
-              Email address
-            </label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3B82F6'
-                e.target.style.boxShadow = '0 0 0 2px #3B82F620'
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#E5E7EB'
-                e.target.style.boxShadow = 'none'
-              }}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>
-              Password
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3B82F6'
-                e.target.style.boxShadow = '0 0 0 2px #3B82F620'
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#E5E7EB'
-                e.target.style.boxShadow = 'none'
-              }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              backgroundColor: loading ? '#93C5FD' : '#3B82F6',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '10px 16px',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              marginTop: '4px',
-            }}
-            onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#2563EB' }}
-            onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#3B82F6' }}
-          >
-            {loading ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
-
-        <p className="text-center mt-6" style={{ fontSize: '13px', color: '#6B7280' }}>
-          Don't have an account?{' '}
-          <Link
-            to="/register"
-            style={{ color: '#3B82F6', fontWeight: 500, textDecoration: 'none' }}
-          >
-            Register
-          </Link>
+        {/* Tagline pinned to bottom-left */}
+        <p
+          style={{
+            position: 'absolute',
+            bottom: '40px',
+            left: '40px',
+            color: '#4A9EFF',
+            fontSize: '14px',
+            fontWeight: 500,
+            margin: 0,
+            maxWidth: '240px',
+            lineHeight: 1.5,
+          }}
+        >
+          AI-Powered Intelligence for Project and Strategy Success
         </p>
       </div>
+
+      {/* ── Right Panel ── */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '48px 24px',
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '420px',
+            backgroundColor: '#1E1B4B',
+            borderRadius: '12px',
+            padding: '44px 40px',
+          }}
+        >
+          {/* Heading */}
+          <h2
+            style={{
+              color: '#FFFFFF',
+              fontSize: '28px',
+              fontWeight: 700,
+              margin: '0 0 8px 0',
+            }}
+          >
+            Welcome Back
+          </h2>
+          <p
+            style={{
+              color: '#9CA3AF',
+              fontSize: '13px',
+              margin: '0 0 28px 0',
+              lineHeight: 1.5,
+            }}
+          >
+            Enter your credentials to access your account
+          </p>
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {error && (
+              <div
+                style={{
+                  backgroundColor: 'rgba(220,38,38,0.15)',
+                  border: '1px solid rgba(220,38,38,0.4)',
+                  borderRadius: '6px',
+                  padding: '10px 14px',
+                  fontSize: '13px',
+                  color: '#FCA5A5',
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            {/* Email */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ color: '#FFFFFF', fontSize: '13px', fontWeight: 500 }}>
+                Username
+              </label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.outline = '2px solid #7B6FE8')}
+                onBlur={(e) => (e.target.style.outline = 'none')}
+              />
+            </div>
+
+            {/* Password */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label style={{ color: '#FFFFFF', fontSize: '13px', fontWeight: 500 }}>
+                  Password
+                </label>
+                <a
+                  href="#"
+                  style={{
+                    color: '#FFFFFF',
+                    fontSize: '12px',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }}
+                  onClick={(e) => e.preventDefault()}
+                >
+                  Forget Password?
+                </a>
+              </div>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.outline = '2px solid #7B6FE8')}
+                onBlur={(e) => (e.target.style.outline = 'none')}
+              />
+            </div>
+
+            {/* Remember me */}
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                color: '#D1D5DB',
+                fontSize: '13px',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                style={{ width: '14px', height: '14px', cursor: 'pointer', accentColor: '#7B6FE8' }}
+              />
+              Remember me
+            </label>
+
+            {/* Sign In button */}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                background: loading ? '#4B4890' : 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px',
+                fontSize: '15px',
+                fontWeight: 700,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                marginTop: '8px',
+                letterSpacing: '0.3px',
+              }}
+            >
+              {loading ? 'Signing in…' : 'Sign In'}
+            </button>
+          </form>
+
+          {/* Sign up link */}
+          <p
+            style={{
+              textAlign: 'center',
+              marginTop: '24px',
+              color: '#9CA3AF',
+              fontSize: '13px',
+            }}
+          >
+            Don't have an account?{' '}
+            <Link
+              to="/register"
+              style={{
+                color: '#FFFFFF',
+                fontWeight: 700,
+                textDecoration: 'underline',
+              }}
+            >
+              Sign up
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* ── Responsive styles ── */}
+      <style>{`
+        @media (max-width: 768px) {
+          .left-panel {
+            width: 100% !important;
+            min-height: 220px;
+            padding: 40px 24px 60px !important;
+          }
+          div[style*="flex-direction: row"] {
+            flex-direction: column !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }
