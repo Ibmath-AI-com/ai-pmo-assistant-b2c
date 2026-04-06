@@ -1,0 +1,57 @@
+import sys
+from pathlib import Path
+
+# Add shared library to path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from config.settings import get_settings
+
+settings = get_settings()
+
+app = FastAPI(
+    title="AI PMO - Auth Service",
+    version="1.0.0",
+    docs_url="/docs" if settings.app_env != "production" else None,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "service": "auth-service"}
+
+
+from app.api.auth import router as auth_router
+
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+
+from app.api.users import router as users_router
+app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
+
+from app.api.organizations import router as orgs_router
+from app.api.departments import router as depts_router
+app.include_router(orgs_router, prefix="/api/v1/organizations", tags=["organizations"])
+app.include_router(depts_router, prefix="/api/v1/departments", tags=["departments"])
+
+from app.api.roles import router as roles_router
+app.include_router(roles_router, prefix="/api/v1/roles", tags=["roles"])
+
+# Uncomment as built:
+# from app.api.users import router as users_router
+# from app.api.organizations import router as orgs_router
+# from app.api.departments import router as depts_router
+# from app.api.roles import router as roles_router
+# app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
+# app.include_router(orgs_router, prefix="/api/v1/organizations", tags=["organizations"])
+# app.include_router(depts_router, prefix="/api/v1/departments", tags=["departments"])
+# app.include_router(roles_router, prefix="/api/v1/roles", tags=["roles"])
