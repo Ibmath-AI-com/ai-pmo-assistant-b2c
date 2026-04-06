@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useRegister } from '@/lib/hooks/useAuth'
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -13,6 +15,32 @@ const inputStyle: React.CSSProperties = {
 }
 
 export function RegisterPage() {
+  const [form, setForm] = useState({
+    first_name: '',
+    last_name: '',
+    username: '',
+    email: '',
+    password: '',
+  })
+  const { register, loading, error } = useRegister()
+
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }))
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    register(form)
+  }
+
+  const focusStyle = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.style.borderColor = '#3B82F6'
+    e.target.style.boxShadow = '0 0 0 2px #3B82F620'
+  }
+  const blurStyle = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.style.borderColor = '#E5E7EB'
+    e.target.style.boxShadow = 'none'
+  }
+
   return (
     <div
       className="flex min-h-screen items-center justify-center"
@@ -46,90 +74,73 @@ export function RegisterPage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>
-              Full name
-            </label>
-            <input
-              type="text"
-              placeholder="Jane Doe"
-              style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3B82F6'
-                e.target.style.boxShadow = '0 0 0 2px #3B82F620'
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && (
+            <div
+              style={{
+                backgroundColor: '#FEF2F2',
+                border: '1px solid #FECACA',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                fontSize: '13px',
+                color: '#DC2626',
               }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#E5E7EB'
-                e.target.style.boxShadow = 'none'
-              }}
-            />
+            >
+              {error}
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="flex flex-col gap-1">
+              <label style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>First name</label>
+              <input type="text" placeholder="Jane" value={form.first_name} onChange={set('first_name')} style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>Last name</label>
+              <input type="text" placeholder="Doe" value={form.last_name} onChange={set('last_name')} style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
+            </div>
           </div>
 
           <div className="flex flex-col gap-1">
-            <label style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>
-              Email address
-            </label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3B82F6'
-                e.target.style.boxShadow = '0 0 0 2px #3B82F620'
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#E5E7EB'
-                e.target.style.boxShadow = 'none'
-              }}
-            />
+            <label style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>Username</label>
+            <input type="text" placeholder="janedoe" value={form.username} onChange={set('username')} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>
-              Password
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3B82F6'
-                e.target.style.boxShadow = '0 0 0 2px #3B82F620'
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#E5E7EB'
-                e.target.style.boxShadow = 'none'
-              }}
-            />
+            <label style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>Email address</label>
+            <input type="email" placeholder="you@example.com" value={form.email} onChange={set('email')} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>Password</label>
+            <input type="password" placeholder="••••••••" value={form.password} onChange={set('password')} required style={inputStyle} onFocus={focusStyle} onBlur={blurStyle} />
           </div>
 
           <button
+            type="submit"
+            disabled={loading}
             style={{
               width: '100%',
-              backgroundColor: '#3B82F6',
+              backgroundColor: loading ? '#93C5FD' : '#3B82F6',
               color: '#FFFFFF',
               border: 'none',
               borderRadius: '8px',
               padding: '10px 16px',
               fontSize: '14px',
               fontWeight: 500,
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               marginTop: '4px',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#3B82F6')}
+            onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#2563EB' }}
+            onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#3B82F6' }}
           >
-            Create account
+            {loading ? 'Creating account…' : 'Create account'}
           </button>
-        </div>
+        </form>
 
         <p className="text-center mt-6" style={{ fontSize: '13px', color: '#6B7280' }}>
           Already have an account?{' '}
-          <Link
-            to="/login"
-            style={{ color: '#3B82F6', fontWeight: 500, textDecoration: 'none' }}
-          >
+          <Link to="/login" style={{ color: '#3B82F6', fontWeight: 500, textDecoration: 'none' }}>
             Sign in
           </Link>
         </p>

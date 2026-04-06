@@ -1,6 +1,5 @@
 # Claude AI commands - exclude from repo
 .claude
-plans/
 
 # Node modules - exclude from repo
 node_modules/

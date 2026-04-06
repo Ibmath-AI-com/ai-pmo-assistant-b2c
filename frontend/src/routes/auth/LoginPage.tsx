@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useLogin } from '@/lib/hooks/useAuth'
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -13,6 +15,15 @@ const inputStyle: React.CSSProperties = {
 }
 
 export function LoginPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const { login, loading, error } = useLogin()
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    login({ email, password })
+  }
+
   return (
     <div
       className="flex min-h-screen items-center justify-center"
@@ -46,7 +57,22 @@ export function LoginPage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && (
+            <div
+              style={{
+                backgroundColor: '#FEF2F2',
+                border: '1px solid #FECACA',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                fontSize: '13px',
+                color: '#DC2626',
+              }}
+            >
+              {error}
+            </div>
+          )}
+
           <div className="flex flex-col gap-1">
             <label style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>
               Email address
@@ -54,6 +80,9 @@ export function LoginPage() {
             <input
               type="email"
               placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
               style={inputStyle}
               onFocus={(e) => {
                 e.target.style.borderColor = '#3B82F6'
@@ -73,6 +102,9 @@ export function LoginPage() {
             <input
               type="password"
               placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
               style={inputStyle}
               onFocus={(e) => {
                 e.target.style.borderColor = '#3B82F6'
@@ -86,24 +118,26 @@ export function LoginPage() {
           </div>
 
           <button
+            type="submit"
+            disabled={loading}
             style={{
               width: '100%',
-              backgroundColor: '#3B82F6',
+              backgroundColor: loading ? '#93C5FD' : '#3B82F6',
               color: '#FFFFFF',
               border: 'none',
               borderRadius: '8px',
               padding: '10px 16px',
               fontSize: '14px',
               fontWeight: 500,
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               marginTop: '4px',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#3B82F6')}
+            onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#2563EB' }}
+            onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#3B82F6' }}
           >
-            Sign in
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
-        </div>
+        </form>
 
         <p className="text-center mt-6" style={{ fontSize: '13px', color: '#6B7280' }}>
           Don't have an account?{' '}
