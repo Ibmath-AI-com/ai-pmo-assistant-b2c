@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -41,7 +41,6 @@ jobs:
 
       - name: Test
         run: npm run test -- --runInBand
-        continue-on-error: false
 
       - name: Build
         run: npm run build
@@ -54,15 +53,17 @@ jobs:
       matrix:
         service:
           - auth-service
+          - chat-service
           - persona-service
           - knowledge-service
           - template-service
           - admin-service
           - gateway
+          - ai-orchestrator
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -82,8 +83,9 @@ jobs:
 
       - name: Run tests
         run: |
-          if [ -d services/${{ matrix.service }}/tests ]; then
-            pytest services/${{ matrix.service }}/tests
+          TEST_DIR="services/${{ matrix.service }}/tests"
+          if [ -d "$TEST_DIR" ] && find "$TEST_DIR" -type f \( -name "test_*.py" -o -name "*_test.py" \) | grep -q .; then
+            pytest "$TEST_DIR"
           else
-            echo "No tests directory for ${{ matrix.service }}, skipping"
+            echo "No test files for ${{ matrix.service }}, skipping"
           fi
