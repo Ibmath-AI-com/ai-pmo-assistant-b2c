@@ -1,5 +1,6 @@
 # Claude AI commands - exclude from repo
 .claude
+plans/
 
 # Node modules - exclude from repo
 node_modules/
@@ -23,6 +24,9 @@ __pycache__/
 *.pyd
 .pytest_cache/
 
+services/ai-orchestrator/
+services/chat-service/
+
 # OS files - exclude from repo
 .DS_Store
 # IDE files - exclude from repo
@@ -37,4 +41,5 @@ Schema.sql
 SCP.md
 STRUCTURE.md
 DESIGN_SYSTEM.md
+PROGRESS.md
 
