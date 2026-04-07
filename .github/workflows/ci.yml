@@ -74,13 +74,11 @@ jobs:
       matrix:
         service:
           - auth-service
-          - chat-service
           - persona-service
           - knowledge-service
           - template-service
           - admin-service
           - gateway
-          - ai-orchestrator
 
     steps:
       - name: Checkout
