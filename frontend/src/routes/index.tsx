@@ -1,17 +1,12 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { RequireAuth } from './RequireAuth'
 import { HomePage } from './home/HomePage'
 import { KnowledgeListPage } from './knowledge-hub/KnowledgeListPage'
 import { PersonaListPage } from './personas/PersonaListPage'
 import { AdminDashboard } from './admin/AdminDashboard'
 import { LoginPage } from './auth/LoginPage'
 import { RegisterPage } from './auth/RegisterPage'
-
-function RequireAuth({ children }: { children: React.ReactNode }) {
-  const token = localStorage.getItem('access_token')
-  if (!token) return <Navigate to="/login" replace />
-  return <>{children}</>
-}
 
 export const router = createBrowserRouter([
   {

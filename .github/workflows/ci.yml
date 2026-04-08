@@ -2,11 +2,22 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: ["main"]
+  push:
+    branches:
+      - "main"
+      - "f-dayyak"
+      - "h-salah"
+      - "m-kanaan"
+      - "m-zag"
 
 jobs:
-  build-test:
+  frontend:
+    name: Frontend
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
 
     steps:
       - name: Checkout
@@ -16,15 +27,119 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Install
+      - name: Install dependencies
         run: npm ci
 
       - name: Lint
         run: npm run lint
 
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Test
-        run: npm test -- --runInBand
+        run: npm run test
 
       - name: Build
         run: npm run build
+
+  backend:
+    name: Backend (${{ matrix.service }})
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_pass
+          POSTGRES_DB: ci_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U ci_user -d ci_db"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - persona-service
+          - knowledge-service
+          - template-service
+          - admin-service
+          - gateway
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            services/${{ matrix.service }}/requirements.txt
+            services/shared/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r services/${{ matrix.service }}/requirements.txt
+          pip install -r services/shared/requirements.txt
+          pip install pytest pytest-asyncio httpx
+
+      - name: Create database schema
+        env:
+          DB_HOST: localhost
+          DB_PORT: "5432"
+          DB_USER: ci_user
+          DB_PASSWORD: ci_pass
+          DB_NAME: ci_db
+        run: |
+          python - <<'EOF'
+          import asyncio, sys
+          sys.path.insert(0, "services/shared")
+          from sqlalchemy.ext.asyncio import create_async_engine
+          from db.models.base import Base
+          import db.models.organization
+          import db.models.user
+          import db.models.role
+          import db.models.session
+
+          async def main():
+              engine = create_async_engine(
+                  "postgresql+asyncpg://ci_user:ci_pass@localhost:5432/ci_db",
+                  echo=False,
+              )
+              async with engine.begin() as conn:
+                  await conn.run_sync(Base.metadata.create_all)
+              await engine.dispose()
+              print("Schema created OK")
+
+          asyncio.run(main())
+          EOF
+
+      - name: Run tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: "5432"
+          DB_USER: ci_user
+          DB_PASSWORD: ci_pass
+          DB_NAME: ci_db
+          DB_MAX: "10"
+          JWT_SECRET_KEY: ci-test-secret-key-not-for-production
+          APP_ENV: "test"
+        run: |
+          TEST_DIR="services/${{ matrix.service }}/tests"
+          if [ -d "$TEST_DIR" ] && find "$TEST_DIR" -type f \( -name "test_*.py" -o -name "*_test.py" \) | grep -q .; then
+            pytest "$TEST_DIR" -v
+          else
+            echo "No test files for ${{ matrix.service }}, skipping"
+          fi

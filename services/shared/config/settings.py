@@ -1,7 +1,8 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
-from pydantic import Field, computed_field
+from pydantic import Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Walk up from shared/config/ to find the repo root .env
@@ -65,6 +66,14 @@ class Settings(BaseSettings):
     app_env: str = Field(default="development")
     tenant_mode: str = Field(default="both")
     log_level: str = Field(default="INFO")
+
+    @model_validator(mode="before")
+    @classmethod
+    def strip_empty_strings(cls, values: Any) -> Any:
+        """Remove empty string env vars so field defaults are used instead."""
+        if isinstance(values, dict):
+            return {k: v for k, v in values.items() if v != ""}
+        return values
 
 
 @lru_cache
