@@ -1,7 +1,8 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
-from pydantic import Field, computed_field
+from pydantic import Field, computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Walk up from shared/config/ to find the repo root .env
@@ -23,6 +24,16 @@ class Settings(BaseSettings):
     db_password: str = Field(default="admin123")
     db_name: str = Field(default="ai_pmo")
     db_max: int = Field(default=10)
+
+    @field_validator("db_port", mode="before")
+    @classmethod
+    def coerce_db_port(cls, v: Any) -> Any:
+        return 5432 if v == "" else v
+
+    @field_validator("db_max", mode="before")
+    @classmethod
+    def coerce_db_max(cls, v: Any) -> Any:
+        return 10 if v == "" else v
 
     @computed_field
     @property
