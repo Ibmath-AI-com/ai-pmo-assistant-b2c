@@ -54,21 +54,6 @@ jobs:
     name: Backend (${{ matrix.service }})
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres -d test_db"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     strategy:
       fail-fast: false
       matrix:
@@ -91,40 +76,29 @@ jobs:
           cache: pip
           cache-dependency-path: |
             services/${{ matrix.service }}/requirements.txt
-            services/shared/**/*.txt
+            services/shared/requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
           pip install -r services/${{ matrix.service }}/requirements.txt
-          if [ -f services/shared/requirements.txt ]; then pip install -r services/shared/requirements.txt; fi
-          pip install pytest pytest-asyncio
-
-      - name: Wait for Postgres
-        run: |
-          for i in {1..30}; do
-            if pg_isready -h 127.0.0.1 -p 5432 -U postgres -d test_db; then
-              echo "Postgres is ready"
-              exit 0
-            fi
-            echo "Waiting for Postgres..."
-            sleep 2
-          done
-          echo "Postgres did not become ready in time"
-          exit 1
+          pip install -r services/shared/requirements.txt
+          pip install pytest pytest-asyncio httpx
 
       - name: Run tests
         env:
-          DATABASE_URL: postgresql+asyncpg://appuser:change_this_password@15.135.254.123:5432/pmodb
-          POSTGRES_HOST: 15.135.254.123
-          POSTGRES_PORT: 5432
-          POSTGRES_DB: pmodb
-          POSTGRES_USER: appuser
-          POSTGRES_PASSWORD: change_this_password
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_MAX: "10"
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          APP_ENV: "test"
         run: |
           TEST_DIR="services/${{ matrix.service }}/tests"
           if [ -d "$TEST_DIR" ] && find "$TEST_DIR" -type f \( -name "test_*.py" -o -name "*_test.py" \) | grep -q .; then
-            pytest "$TEST_DIR"
+            pytest "$TEST_DIR" -v
           else
             echo "No test files for ${{ matrix.service }}, skipping"
           fi
