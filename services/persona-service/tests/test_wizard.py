@@ -3,7 +3,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_full_wizard_flow(client):
+async def test_full_wizard_flow(client, make_user):
     """Complete 4-step persona creation wizard → GET returns everything nested."""
 
     # Step 1: Create basic persona
@@ -39,8 +39,10 @@ async def test_full_wizard_flow(client):
     })
     assert step3.status_code == 200
 
-    # Step 4a: Access
-    user_ids = [str(uuid.uuid4()), str(uuid.uuid4())]
+    # Step 4a: Access — use real user IDs so the user-existence check passes
+    user_id_1 = await make_user()
+    user_id_2 = await make_user()
+    user_ids = [str(user_id_1), str(user_id_2)]
     step4a = await client.put(f"/api/v1/personas/{persona_id}/access", json={"user_ids": user_ids})
     assert step4a.status_code == 200
 

@@ -60,10 +60,10 @@ async def test_deactivate_workspace(client):
 
 
 @pytest.mark.asyncio
-async def test_add_and_remove_member(client):
+async def test_add_and_remove_member(client, make_user):
     create_resp = await client.post("/api/v1/workspaces", json={"workspace_name": "Member WS"})
     ws_id = create_resp.json()["workspace_id"]
-    user_id = str(uuid.uuid4())
+    user_id = str(await make_user())
 
     add_resp = await client.post(f"/api/v1/workspaces/{ws_id}/members", json={
         "user_id": user_id,

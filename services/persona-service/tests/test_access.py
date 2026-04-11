@@ -3,7 +3,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_access_control(client):
+async def test_access_control(client, make_user):
     create_resp = await client.post("/api/v1/personas", json={
         "persona_code": "ACC-01",
         "persona_name": "Access Test",
@@ -11,7 +11,7 @@ async def test_access_control(client):
     })
     persona_id = create_resp.json()["persona_id"]
 
-    user_ids = [str(uuid.uuid4()) for _ in range(3)]
+    user_ids = [str(await make_user()) for _ in range(3)]
 
     resp = await client.put(f"/api/v1/personas/{persona_id}/access", json={"user_ids": user_ids})
     assert resp.status_code == 200

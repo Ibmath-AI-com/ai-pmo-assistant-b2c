@@ -42,9 +42,8 @@ TestSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_com
 
 
 async def _create_tables():
-    # Import all models so they're registered on Base
-    import db.models.workspace  # noqa: F401
-    import db.models.persona  # noqa: F401
+    # Import all models so they're registered on Base (including User, Department, etc.)
+    import db.models  # noqa: F401
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -104,3 +103,26 @@ async def client():
             yield ac
 
         app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def make_user():
+    """Insert a real User row into the test DB and return their user_id."""
+    from db.models.user import User
+
+    async def _create(username: str | None = None, email: str | None = None) -> uuid.UUID:
+        uid = uuid.uuid4()
+        uname = username or f"user_{uid.hex[:8]}"
+        uemail = email or f"{uname}@test.com"
+        async with TestSessionLocal() as session:
+            user = User(
+                user_id=uid,
+                username=uname,
+                email=uemail,
+                password_hash="test-hash",
+            )
+            session.add(user)
+            await session.commit()
+        return uid
+
+    return _create
