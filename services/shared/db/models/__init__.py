@@ -7,11 +7,14 @@ from .workspace import Workspace, WorkspaceContentEntity, WorkspaceMember, Works
 from .persona import (
     Persona,
     PersonaAccessRole,
+    PersonaAllowedModel,
     PersonaBehaviorSetting,
     PersonaDomainTag,
+    PersonaKnowledgeCollection,
     PersonaModelPolicy,
     PersonaWorkspaceMapping,
 )
+from .skill import Skill, SkillPersonaMapping
 
 __all__ = [
     "Base",
@@ -36,6 +39,10 @@ __all__ = [
     "PersonaDomainTag",
     "PersonaBehaviorSetting",
     "PersonaModelPolicy",
+    "PersonaAllowedModel",
+    "PersonaKnowledgeCollection",
     "PersonaWorkspaceMapping",
     "PersonaAccessRole",
+    "Skill",
+    "SkillPersonaMapping",
 ]

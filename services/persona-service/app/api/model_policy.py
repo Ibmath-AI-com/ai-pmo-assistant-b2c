@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from auth.dependencies import CurrentUser, get_current_user
 from db.base import get_db
 from app.services.persona_service import PersonaService
-from app.schemas.model_policy import ModelPolicyUpdate
+from app.schemas.model_policy import ModelPolicyUpdate, AllowedModelsUpdate
 from app.schemas.errors import RESPONSES_UPDATE, ERROR_RESPONSES
 
 router = APIRouter()
@@ -39,3 +39,27 @@ async def update_model_policy(
         "allow_external_sources": policy.allow_external_sources,
         "updated_at": policy.updated_at.isoformat() if policy.updated_at else None,
     }
+
+
+@router.put("/{persona_id}/allowed-models", responses=RESPONSES_UPDATE)
+async def update_allowed_models(
+    persona_id: uuid.UUID,
+    body: AllowedModelsUpdate,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    persona = await _svc.get(db, persona_id)
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona not found")
+    rows = await _svc.set_allowed_models(
+        db, persona_id, [m.model_dump() for m in body.models]
+    )
+    return [
+        {
+            "persona_allowed_model_id": str(r.persona_allowed_model_id),
+            "model_id": str(r.model_id),
+            "priority_order": r.priority_order,
+            "is_default": r.is_default,
+        }
+        for r in rows
+    ]

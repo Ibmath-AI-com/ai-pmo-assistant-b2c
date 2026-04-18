@@ -51,6 +51,9 @@ class Persona(Base):
     model_policy: Mapped["PersonaModelPolicy | None"] = relationship("PersonaModelPolicy", back_populates="persona", uselist=False, cascade="all, delete-orphan")
     workspace_mappings: Mapped[list["PersonaWorkspaceMapping"]] = relationship("PersonaWorkspaceMapping", back_populates="persona", cascade="all, delete-orphan")
     access_roles: Mapped[list["PersonaAccessRole"]] = relationship("PersonaAccessRole", back_populates="persona", cascade="all, delete-orphan")
+    allowed_models: Mapped[list["PersonaAllowedModel"]] = relationship("PersonaAllowedModel", back_populates="persona", cascade="all, delete-orphan")
+    knowledge_collections: Mapped[list["PersonaKnowledgeCollection"]] = relationship("PersonaKnowledgeCollection", back_populates="persona", cascade="all, delete-orphan")
+    skill_mappings: Mapped[list["SkillPersonaMapping"]] = relationship("SkillPersonaMapping", back_populates="persona", cascade="all, delete-orphan")
 
 
 class PersonaDomainTag(Base):
@@ -144,4 +147,34 @@ class PersonaAccessRole(Base):
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)  # external — no FK
 
     persona: Mapped["Persona"] = relationship("Persona", back_populates="access_roles")
+
+
+class PersonaAllowedModel(Base):
+    __tablename__ = "persona_allowed_model"
+
+    persona_allowed_model_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    persona_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("persona.persona_id"), nullable=False)
+    model_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)  # external FK to llm_model
+    priority_order: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+
+    __table_args__ = (
+        UniqueConstraint("persona_id", "model_id", name="uq_persona_allowed_model"),
+    )
+
+    persona: Mapped["Persona"] = relationship("Persona", back_populates="allowed_models")
+
+
+class PersonaKnowledgeCollection(Base):
+    __tablename__ = "persona_knowledge_collection"
+
+    persona_knowledge_collection_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    persona_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("persona.persona_id"), nullable=False)
+    knowledge_collection_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)  # external FK to knowledge_collection
+
+    __table_args__ = (
+        UniqueConstraint("persona_id", "knowledge_collection_id", name="uq_persona_knowledge_collection"),
+    )
+
+    persona: Mapped["Persona"] = relationship("Persona", back_populates="knowledge_collections")
 

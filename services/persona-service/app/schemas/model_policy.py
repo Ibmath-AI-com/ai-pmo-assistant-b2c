@@ -11,3 +11,13 @@ class ModelPolicyUpdate(BaseModel):
     classification_limit: str | None = Field(None, pattern="^(Public|Internal|Confidential|Restricted)$")
     allow_file_upload: bool = True
     allow_external_sources: bool = False
+
+
+class AllowedModelItem(BaseModel):
+    model_id: UUID
+    priority_order: int = 1
+    is_default: bool = False
+
+
+class AllowedModelsUpdate(BaseModel):
+    models: list[AllowedModelItem] = Field(default_factory=list)
