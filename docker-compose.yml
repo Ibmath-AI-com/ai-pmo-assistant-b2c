@@ -16,9 +16,9 @@ services:
     container_name: ai_pmo_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: mohannaddb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: ai_pmo
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
     ports:
       - "5432:5432"
     volumes:
