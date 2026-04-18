@@ -8,7 +8,7 @@ import { BasicInfoStep, type BasicInfoValues } from '@/components/persona/BasicI
 import { AIBehaviorStep, type AIBehaviorValues, RAG_LLM_MODES } from '@/components/persona/AIBehaviorStep'
 import { KnowledgeBaseStep, type KnowledgeBaseValues } from '@/components/persona/KnowledgeBaseStep'
 import { ExtraSettingsStep, type ExtraSettingsValues } from '@/components/persona/ExtraSettingsStep'
-import { useToast } from '@/components/persona/Toast'
+import { useToast } from '@/components/persona/useToast'
 
 const STEPS = [
   { id: 1, label: 'Basic Information' },

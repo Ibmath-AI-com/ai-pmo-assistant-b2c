@@ -1,17 +1,18 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useEffect, useState } from 'react'
 
 type ToastKind = 'success' | 'error'
+
 interface Toast {
   id: number
   kind: ToastKind
   message: string
 }
 
-interface ToastCtx {
+export interface ToastCtx {
   show: (kind: ToastKind, message: string) => void
 }
 
-const Ctx = createContext<ToastCtx | null>(null)
+export const ToastContext = createContext<ToastCtx | null>(null)
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -19,11 +20,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const show = useCallback((kind: ToastKind, message: string) => {
     const id = Date.now() + Math.random()
     setToasts((prev) => [...prev, { id, kind, message }])
-    window.setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500)
+    window.setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+    }, 3500)
   }, [])
 
   return (
-    <Ctx.Provider value={{ show }}>
+    <ToastContext.Provider value={{ show }}>
       {children}
       <div
         style={{
@@ -40,17 +43,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <ToastItem key={t.id} toast={t} />
         ))}
       </div>
-    </Ctx.Provider>
+    </ToastContext.Provider>
   )
 }
 
 function ToastItem({ toast }: { toast: Toast }) {
   const [visible, setVisible] = useState(false)
+
   useEffect(() => {
     const t = window.setTimeout(() => setVisible(true), 10)
     return () => window.clearTimeout(t)
   }, [])
+
   const bg = toast.kind === 'success' ? '#10B981' : '#EF4444'
+
   return (
     <div
       style={{
@@ -70,10 +76,4 @@ function ToastItem({ toast }: { toast: Toast }) {
       {toast.message}
     </div>
   )
-}
-
-export function useToast() {
-  const ctx = useContext(Ctx)
-  if (!ctx) throw new Error('useToast must be used inside <ToastProvider>')
-  return ctx
 }

@@ -6,7 +6,7 @@ import { appTheme, inputStyle } from '@/lib/theme'
 import { PersonaAvatar } from '@/components/persona/PersonaAvatar'
 import { CapabilityBadges } from '@/components/persona/CapabilityBadges'
 import { ConfirmModal } from '@/components/persona/ConfirmModal'
-import { useToast } from '@/components/persona/Toast'
+import { useToast } from '@/components/persona/useToast'
 
 interface Filters {
   documentTitle: string
