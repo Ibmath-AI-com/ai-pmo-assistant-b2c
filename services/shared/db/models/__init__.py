@@ -3,6 +3,16 @@ from .organization import Department, Organization
 from .role import Permission, Role, RolePermission, UserAccessOverride, UserRole
 from .session import UserSession
 from .user import User, UserProfile
+from .file import File, FileVersion
+from .knowledge import (
+    DocumentChunk,
+    DocumentIngestionJob,
+    KnowledgeCollection,
+    KnowledgeDocument,
+    KnowledgeDocumentAccess,
+    KnowledgeDocumentGovernance,
+    KnowledgeDocumentTag,
+)
 
 __all__ = [
     "Base",
@@ -18,4 +28,13 @@ __all__ = [
     "UserRole",
     "UserAccessOverride",
     "UserSession",
+    "File",
+    "FileVersion",
+    "KnowledgeCollection",
+    "KnowledgeDocument",
+    "KnowledgeDocumentGovernance",
+    "KnowledgeDocumentTag",
+    "KnowledgeDocumentAccess",
+    "DocumentChunk",
+    "DocumentIngestionJob",
 ]
