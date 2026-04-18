@@ -21,6 +21,7 @@ SERVICE_MAP = {
     "/api/v1/departments":   f"http://localhost:8001",
     "/api/v1/roles":         f"http://localhost:8001",
     "/api/v1/personas":      f"http://localhost:8002",
+    "/api/v1/workspaces":    f"http://localhost:8002",
     "/api/v1/skills":        f"http://localhost:8002",
     "/api/v1/chat":          f"http://localhost:8003",
     "/api/v1/ai":            f"http://localhost:8004",

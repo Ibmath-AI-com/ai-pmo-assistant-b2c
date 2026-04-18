@@ -11,8 +11,10 @@ from sqlalchemy.orm import selectinload
 from db.models.persona import (
     Persona,
     PersonaAccessRole,
+    PersonaAllowedModel,
     PersonaBehaviorSetting,
     PersonaDomainTag,
+    PersonaKnowledgeCollection,
     PersonaModelPolicy,
     PersonaWorkspaceMapping,
 )
@@ -28,6 +30,8 @@ class PersonaService:
             selectinload(Persona.model_policy),
             selectinload(Persona.workspace_mappings),
             selectinload(Persona.access_roles),
+            selectinload(Persona.allowed_models),
+            selectinload(Persona.knowledge_collections),
         ]
 
     async def create(self, db: AsyncSession, data: dict, created_by: uuid.UUID) -> Persona:
@@ -248,3 +252,49 @@ class PersonaService:
         await db.delete(mapping)
         await db.flush()
         return True
+
+    async def set_allowed_models(
+        self, db: AsyncSession, persona_id: uuid.UUID, models: list[dict]
+    ) -> list[PersonaAllowedModel]:
+        existing = await db.execute(
+            select(PersonaAllowedModel).where(PersonaAllowedModel.persona_id == persona_id)
+        )
+        for row in existing.scalars().all():
+            await db.delete(row)
+        await db.flush()
+
+        rows: list[PersonaAllowedModel] = []
+        for item in models:
+            row = PersonaAllowedModel(
+                persona_allowed_model_id=uuid.uuid4(),
+                persona_id=persona_id,
+                model_id=item["model_id"],
+                priority_order=item.get("priority_order", 1),
+                is_default=item.get("is_default", False),
+            )
+            db.add(row)
+            rows.append(row)
+        await db.flush()
+        return rows
+
+    async def set_knowledge_collections(
+        self, db: AsyncSession, persona_id: uuid.UUID, collection_ids: list[uuid.UUID]
+    ) -> list[PersonaKnowledgeCollection]:
+        existing = await db.execute(
+            select(PersonaKnowledgeCollection).where(PersonaKnowledgeCollection.persona_id == persona_id)
+        )
+        for row in existing.scalars().all():
+            await db.delete(row)
+        await db.flush()
+
+        rows: list[PersonaKnowledgeCollection] = []
+        for cid in collection_ids:
+            row = PersonaKnowledgeCollection(
+                persona_knowledge_collection_id=uuid.uuid4(),
+                persona_id=persona_id,
+                knowledge_collection_id=cid,
+            )
+            db.add(row)
+            rows.append(row)
+        await db.flush()
+        return rows

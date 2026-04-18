@@ -14,3 +14,7 @@ class DomainTagItem(BaseModel):
 
 class DomainTagsUpdate(BaseModel):
     tags: list[DomainTagItem]
+
+
+class KnowledgeCollectionsUpdate(BaseModel):
+    collection_ids: list[uuid.UUID] = Field(default_factory=list)
