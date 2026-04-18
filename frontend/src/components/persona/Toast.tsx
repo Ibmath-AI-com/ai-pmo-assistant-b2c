@@ -1,18 +1,11 @@
-import { createContext, useCallback, useEffect, useState } from 'react'
-
-type ToastKind = 'success' | 'error'
+import { useCallback, useEffect, useState } from 'react'
+import { ToastContext, type ToastKind } from './useToast'
 
 interface Toast {
   id: number
   kind: ToastKind
   message: string
 }
-
-export interface ToastCtx {
-  show: (kind: ToastKind, message: string) => void
-}
-
-export const ToastContext = createContext<ToastCtx | null>(null)
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])

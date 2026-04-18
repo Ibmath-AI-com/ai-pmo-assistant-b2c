@@ -1,5 +1,12 @@
-import { useContext } from 'react'
-import { ToastContext } from './Toast'
+import { createContext, useContext } from 'react'
+
+export type ToastKind = 'success' | 'error'
+
+export interface ToastCtx {
+  show: (kind: ToastKind, message: string) => void
+}
+
+export const ToastContext = createContext<ToastCtx | null>(null)
 
 export function useToast() {
   const ctx = useContext(ToastContext)
