@@ -42,10 +42,11 @@ class Settings(BaseSettings):
     rabbitmq_url: str = Field(default="amqp://guest:guest@localhost:5672/")
 
     # Object Storage (MinIO / S3)
-    s3_endpoint: str = Field(default="http://localhost:9000")
-    s3_access_key: str = Field(default="minioadmin")
-    s3_secret_key: str = Field(default="minioadmin")
-    s3_bucket: str = Field(default="ai-pmo-files")
+    s3_endpoint: str | None = Field(default=None, alias="S3_ENDPOINT_URL")
+    s3_access_key: str = Field(default="minioadmin", alias="S3_ACCESS_KEY_ID")
+    s3_secret_key: str = Field(default="minioadmin", alias="S3_SECRET_ACCESS_KEY")
+    s3_bucket: str = Field(default="ai-pmo-files", alias="S3_BUCKET_CONTENT")
+    s3_region: str = Field(default="us-east-1", alias="S3_REGION")
 
     # Vector Store
     qdrant_url: str = Field(default="http://localhost:6333")
