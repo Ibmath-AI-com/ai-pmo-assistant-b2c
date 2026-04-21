@@ -3,16 +3,18 @@ from .organization import Department, Organization
 from .role import Permission, Role, RolePermission, UserAccessOverride, UserRole
 from .session import UserSession
 from .user import User, UserProfile
-from .file import File, FileVersion
-from .knowledge import (
-    DocumentChunk,
-    DocumentIngestionJob,
-    KnowledgeCollection,
-    KnowledgeDocument,
-    KnowledgeDocumentAccess,
-    KnowledgeDocumentGovernance,
-    KnowledgeDocumentTag,
+from .workspace import Workspace, WorkspaceContentEntity, WorkspaceMember, WorkspaceSetting, WorkspaceTag
+from .persona import (
+    Persona,
+    PersonaAccessRole,
+    PersonaAllowedModel,
+    PersonaBehaviorSetting,
+    PersonaDomainTag,
+    PersonaKnowledgeCollection,
+    PersonaModelPolicy,
+    PersonaWorkspaceMapping,
 )
+from .skill import Skill, SkillPersonaMapping
 
 __all__ = [
     "Base",
@@ -28,13 +30,19 @@ __all__ = [
     "UserRole",
     "UserAccessOverride",
     "UserSession",
-    "File",
-    "FileVersion",
-    "KnowledgeCollection",
-    "KnowledgeDocument",
-    "KnowledgeDocumentGovernance",
-    "KnowledgeDocumentTag",
-    "KnowledgeDocumentAccess",
-    "DocumentChunk",
-    "DocumentIngestionJob",
+    "Workspace",
+    "WorkspaceSetting",
+    "WorkspaceTag",
+    "WorkspaceContentEntity",
+    "WorkspaceMember",
+    "Persona",
+    "PersonaDomainTag",
+    "PersonaBehaviorSetting",
+    "PersonaModelPolicy",
+    "PersonaAllowedModel",
+    "PersonaKnowledgeCollection",
+    "PersonaWorkspaceMapping",
+    "PersonaAccessRole",
+    "Skill",
+    "SkillPersonaMapping",
 ]
