@@ -20,6 +20,8 @@ export interface DocumentGovernance {
   review_date: string | null
   expiry_date: string | null
   review_status: string | null
+  allow_external_llm_usage: boolean
+  llm_model_id: string | null
 }
 
 export interface DocumentTag {
@@ -63,6 +65,8 @@ export interface GovernanceUpsert {
   review_date?: string
   expiry_date?: string
   review_status?: string
+  allow_external_llm_usage?: boolean
+  llm_model_id?: string
 }
 
 export interface TagUpsert {
@@ -137,6 +141,7 @@ export interface DocumentFilters {
   classification_level?: string
   sdlc?: string
   domain?: string
+  persona?: string
   status?: string
   skip?: number
   limit?: number
@@ -150,6 +155,9 @@ export const fetchCollections = () =>
 export const fetchCollection = (id: string) =>
   apiClient.get<KnowledgeCollection>(`/api/v1/knowledge/collections/${id}`).then((r) => r.data)
 
+export const createCollection = (data: { collection_code: string; collection_name: string; description?: string }) =>
+  apiClient.post<KnowledgeCollection>('/api/v1/knowledge/collections', data).then((r) => r.data)
+
 // ─── Documents ───────────────────────────────────────────────────────────────
 
 export const fetchDocuments = (filters: DocumentFilters = {}) => {
@@ -160,6 +168,7 @@ export const fetchDocuments = (filters: DocumentFilters = {}) => {
   if (filters.classification_level) params.classification_level = filters.classification_level
   if (filters.sdlc) params.sdlc = filters.sdlc
   if (filters.domain) params.domain = filters.domain
+  if (filters.persona) params.persona = filters.persona
   if (filters.status) params.status = filters.status
   if (filters.skip !== undefined) params.skip = filters.skip
   if (filters.limit !== undefined) params.limit = filters.limit

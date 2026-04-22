@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus } from 'lucide-react'
+import { appTheme } from '@/lib/theme'
 import { FilterBar } from '@/components/knowledge/FilterBar'
 import { DocumentTable } from '@/components/knowledge/DocumentTable'
+import { ConfirmModal } from '@/components/persona/ConfirmModal'
+import { useToast } from '@/components/persona/useToast'
 import {
   useCollections,
   useDocuments,
@@ -21,6 +23,7 @@ type ConfirmDialog =
 
 export function KnowledgeListPage() {
   const navigate = useNavigate()
+  const toast = useToast()
   const [activeFilters, setActiveFilters] = useState<DocumentFilters>(DEFAULT_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<DocumentFilters>(DEFAULT_FILTERS)
   const [page, setPage] = useState(0)
@@ -44,9 +47,24 @@ export function KnowledgeListPage() {
 
   const handleConfirm = () => {
     if (!confirm) return
-    if (confirm.type === 'activate') changeStatus({ id: confirm.id, status: 'active' })
-    if (confirm.type === 'deactivate') changeStatus({ id: confirm.id, status: 'archived' })
-    if (confirm.type === 'delete') changeStatus({ id: confirm.id, status: 'deleted' })
+    if (confirm.type === 'activate') {
+      changeStatus(
+        { id: confirm.id, status: 'active' },
+        { onSuccess: () => toast.show('success', 'Document activated'), onError: () => toast.show('error', 'Failed to activate document') }
+      )
+    }
+    if (confirm.type === 'deactivate') {
+      changeStatus(
+        { id: confirm.id, status: 'archived' },
+        { onSuccess: () => toast.show('success', 'Document deactivated'), onError: () => toast.show('error', 'Failed to deactivate document') }
+      )
+    }
+    if (confirm.type === 'delete') {
+      changeStatus(
+        { id: confirm.id, status: 'deleted' },
+        { onSuccess: () => toast.show('error', 'Document deleted'), onError: () => toast.show('error', 'Failed to delete document') }
+      )
+    }
     setConfirm(null)
   }
 
@@ -55,29 +73,38 @@ export function KnowledgeListPage() {
 
   const dialogText = confirm
     ? confirm.type === 'activate'
-      ? { title: 'Activate document?', body: 'The document will be set to Active and included in search results.', action: 'Activate', danger: false }
+      ? { title: 'Activate document?', message: 'The document will be set to Active and included in search results.', confirmLabel: 'Activate', destructive: false }
       : confirm.type === 'deactivate'
-      ? { title: 'Deactivate document?', body: 'Are you sure you want to deactivate the knowledge Document?', action: 'Deactivate', danger: false }
-      : { title: 'Delete document?', body: 'This will mark the document as deleted. This can be undone by reactivating the document.', action: 'Delete', danger: true }
+      ? { title: 'Deactivate document?', message: 'Are you sure you want to deactivate this knowledge document?', confirmLabel: 'Deactivate', destructive: false }
+      : { title: 'Delete document?', message: 'This will mark the document as deleted. This can be undone by reactivating.', confirmLabel: 'Delete', destructive: true }
     : null
 
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <div style={{ fontFamily: appTheme.font, color: appTheme.textPrimary }}>
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Knowledge Hub</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
-            Manage your organization's knowledge documents
-          </p>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 700, color: appTheme.textPrimary, margin: 0 }}>
+          Knowledge Hub
+        </h1>
         <button
           type="button"
           onClick={() => navigate('/knowledge-hub/new')}
-          className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            border: 'none',
+            backgroundColor: 'transparent',
+            color: appTheme.accentBlue,
+            fontWeight: 500,
+            fontSize: '13px',
+            cursor: 'pointer',
+            padding: 0,
+            fontFamily: appTheme.font,
+          }}
         >
-          <Plus className="h-4 w-4" />
           Add New Document
+          <PlusCircle />
         </button>
       </div>
 
@@ -89,6 +116,8 @@ export function KnowledgeListPage() {
         onReset={handleReset}
         collections={collections}
       />
+
+      <div style={{ height: '16px' }} />
 
       {/* Table */}
       <DocumentTable
@@ -105,25 +134,60 @@ export function KnowledgeListPage() {
 
       {/* Pagination */}
       {documents.length > 0 && (
-        <div className="flex items-center justify-between text-sm text-gray-500">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '12px', fontSize: '13px', color: appTheme.textSecondary, fontFamily: appTheme.font }}>
           <span>Showing {start}–{end} results</span>
-          <div className="flex items-center gap-1">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="rounded border border-gray-300 px-3 py-1 text-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              style={{
+                height: '28px',
+                padding: '0 12px',
+                border: `1px solid ${appTheme.border}`,
+                borderRadius: appTheme.radiusInput,
+                backgroundColor: '#FFFFFF',
+                fontSize: '12px',
+                color: appTheme.textSubtle,
+                cursor: page === 0 ? 'not-allowed' : 'pointer',
+                opacity: page === 0 ? 0.4 : 1,
+                fontFamily: appTheme.font,
+              }}
             >
               Prev
             </button>
-            <span className="rounded border border-indigo-500 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+            <span
+              style={{
+                height: '28px',
+                padding: '0 12px',
+                border: `1px solid ${appTheme.accentBlue}`,
+                borderRadius: appTheme.radiusInput,
+                backgroundColor: '#EFF6FF',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: appTheme.accentBlue,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
               {page + 1}
             </span>
             <button
               type="button"
               onClick={() => setPage((p) => p + 1)}
               disabled={documents.length < 20}
-              className="rounded border border-gray-300 px-3 py-1 text-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              style={{
+                height: '28px',
+                padding: '0 12px',
+                border: `1px solid ${appTheme.border}`,
+                borderRadius: appTheme.radiusInput,
+                backgroundColor: '#FFFFFF',
+                fontSize: '12px',
+                color: appTheme.textSubtle,
+                cursor: documents.length < 20 ? 'not-allowed' : 'pointer',
+                opacity: documents.length < 20 ? 0.4 : 1,
+                fontFamily: appTheme.font,
+              }}
             >
               Next
             </button>
@@ -131,33 +195,27 @@ export function KnowledgeListPage() {
         </div>
       )}
 
-      {/* Confirmation Dialog */}
+      {/* Confirm Dialog */}
       {confirm && dialogText && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="text-base font-semibold text-gray-900">{dialogText.title}</h2>
-            <p className="mt-2 text-sm text-gray-500">{dialogText.body}</p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setConfirm(null)}
-                className="rounded-md border border-gray-300 px-4 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirm}
-                className={`rounded-md px-4 py-1.5 text-sm font-medium text-white ${
-                  dialogText.danger ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'
-                }`}
-              >
-                {dialogText.action}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          open
+          title={dialogText.title}
+          message={dialogText.message}
+          confirmLabel={dialogText.confirmLabel}
+          destructive={dialogText.destructive}
+          onConfirm={handleConfirm}
+          onCancel={() => setConfirm(null)}
+        />
       )}
     </div>
+  )
+}
+
+function PlusCircle() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20">
+      <circle cx="10" cy="10" r="10" fill={appTheme.cyan} />
+      <path d="M10 5 L10 15 M5 10 L15 10" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+    </svg>
   )
 }

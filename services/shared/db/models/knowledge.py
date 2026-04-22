@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import DATE, INTEGER, TEXT, ForeignKey, String, DateTime, func
+from sqlalchemy import BOOLEAN, DATE, INTEGER, TEXT, ForeignKey, String, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -83,7 +83,11 @@ class KnowledgeDocumentGovernance(Base):
     effective_date: Mapped[date | None] = mapped_column(DATE)
     review_date: Mapped[date | None] = mapped_column(DATE)
     expiry_date: Mapped[date | None] = mapped_column(DATE)
-    review_status: Mapped[str | None] = mapped_column(TEXT)
+    review_status: Mapped[str | None] = mapped_column(String(50))
+    allow_external_llm_usage: Mapped[bool] = mapped_column(
+        BOOLEAN, nullable=False, default=False, server_default="false"
+    )
+    llm_model_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     document: Mapped["KnowledgeDocument"] = relationship("KnowledgeDocument", back_populates="governance")
 
@@ -170,3 +174,67 @@ class DocumentIngestionJob(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     document: Mapped["KnowledgeDocument"] = relationship("KnowledgeDocument", back_populates="ingestion_jobs")
+
+
+class KnowledgeDocumentPersona(Base):
+    """Maps a document to persona IDs relevant for RAG retrieval."""
+    __tablename__ = "knowledge_document_persona"
+
+    knowledge_document_persona_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    knowledge_document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_document.knowledge_document_id"),
+        nullable=False,
+    )
+    persona_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    relevance_weight: Mapped[str | None] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active", server_default="active")
+
+    document: Mapped["KnowledgeDocument"] = relationship("KnowledgeDocument")
+
+
+class KnowledgeDocumentRagSetting(Base):
+    """Structured RAG optimization settings per document (one row per document)."""
+    __tablename__ = "knowledge_document_rag_setting"
+
+    knowledge_document_rag_setting_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    knowledge_document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_document.knowledge_document_id"),
+        unique=True,
+        nullable=False,
+    )
+    project_type: Mapped[str | None] = mapped_column(String(50))
+    priority_weight: Mapped[str | None] = mapped_column(String(20))
+
+    document: Mapped["KnowledgeDocument"] = relationship("KnowledgeDocument")
+
+
+class DocumentEmbedding(Base):
+    """Stores a reference to the vector embedding for a document chunk."""
+    __tablename__ = "document_embedding"
+
+    document_embedding_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    knowledge_document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_document.knowledge_document_id"),
+        nullable=False,
+    )
+    document_chunk_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("document_chunk.document_chunk_id"),
+        nullable=False,
+    )
+    embedding_model: Mapped[str] = mapped_column(String(100), nullable=False)
+    vector_store: Mapped[str] = mapped_column(String(50), nullable=False, default="pgvector", server_default="pgvector")
+    vector_id: Mapped[str | None] = mapped_column(TEXT)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    document: Mapped["KnowledgeDocument"] = relationship("KnowledgeDocument")
+    chunk: Mapped["DocumentChunk"] = relationship("DocumentChunk")

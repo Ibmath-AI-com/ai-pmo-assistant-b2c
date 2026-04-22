@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MoreHorizontal } from 'lucide-react'
+import { appTheme } from '@/lib/theme'
 import type { DocumentListItem, KnowledgeCollection } from '@/lib/api/knowledge'
 import { ClassificationBadge } from './ClassificationBadge'
 import { StatusBadge } from './StatusBadge'
@@ -24,14 +24,37 @@ function getTagsByType(tags: DocumentListItem['tags'] | undefined | null, type: 
   return (tags ?? []).filter((t) => t.tag_type === type && t.status === 'active')
 }
 
+const thStyle: React.CSSProperties = {
+  padding: '10px 14px',
+  textAlign: 'left',
+  fontSize: '11px',
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  color: appTheme.textSecondary,
+  backgroundColor: '#F8FAFC',
+  borderBottom: `1px solid ${appTheme.border}`,
+  whiteSpace: 'nowrap',
+}
+
+const tdStyle: React.CSSProperties = {
+  padding: '10px 14px',
+  fontSize: '13px',
+  color: appTheme.textPrimary,
+  borderBottom: `1px solid ${appTheme.border}`,
+  verticalAlign: 'middle',
+}
+
+function InlineTag({ label, bg, color }: { label: string; bg: string; color: string }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', borderRadius: '20px', padding: '1px 7px', fontSize: '11px', fontWeight: 500, backgroundColor: bg, color }}>
+      {label}
+    </span>
+  )
+}
+
 function ActionsMenu({
-  status,
-  onView,
-  onEdit,
-  onActivate,
-  onDeactivate,
-  onReindex,
-  onDelete,
+  status, onView, onEdit, onActivate, onDeactivate, onReindex, onDelete,
 }: {
   status: string
   onView: () => void
@@ -42,6 +65,7 @@ function ActionsMenu({
   onDelete: () => void
 }) {
   const [open, setOpen] = useState(false)
+  const [hovered, setHovered] = useState<string | null>(null)
 
   const items = [
     { label: 'View Document', action: onView },
@@ -54,27 +78,65 @@ function ActionsMenu({
   ]
 
   return (
-    <div className="relative inline-block text-left">
+    <div style={{ position: 'relative', display: 'inline-block' }}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none"
+        style={{
+          width: '28px',
+          height: '28px',
+          borderRadius: '50%',
+          border: 'none',
+          backgroundColor: open ? '#F1F5F9' : 'transparent',
+          cursor: 'pointer',
+          color: appTheme.textSecondary,
+          fontSize: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F1F5F9')}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = open ? '#F1F5F9' : 'transparent')}
       >
-        <MoreHorizontal className="h-4 w-4" />
+        ⋯
       </button>
 
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-1 w-40 rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+          <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setOpen(false)} />
+          <div
+            style={{
+              position: 'absolute',
+              top: '32px',
+              right: 0,
+              backgroundColor: appTheme.cardBg,
+              border: `1px solid ${appTheme.border}`,
+              borderRadius: appTheme.radiusCard,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+              padding: '4px 0',
+              minWidth: '150px',
+              zIndex: 20,
+            }}
+          >
             {items.map(({ label, action, danger }) => (
               <button
                 key={label}
                 type="button"
                 onClick={() => { action(); setOpen(false) }}
-                className={`block w-full px-4 py-1.5 text-left text-sm hover:bg-gray-50 ${
-                  danger ? 'text-red-600 hover:bg-red-50' : 'text-gray-700'
-                }`}
+                onMouseEnter={() => setHovered(label)}
+                onMouseLeave={() => setHovered(null)}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '7px 16px',
+                  fontSize: '13px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: danger ? appTheme.danger : appTheme.textSubtle,
+                  backgroundColor: hovered === label ? '#F1F5F9' : 'transparent',
+                  fontFamily: appTheme.font,
+                }}
               >
                 {label}
               </button>
@@ -101,101 +163,137 @@ export function DocumentTable({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16 text-gray-400">
-        <span className="text-sm">Loading documents…</span>
+      <div
+        style={{
+          backgroundColor: appTheme.cardBg,
+          border: `1px solid ${appTheme.border}`,
+          borderRadius: appTheme.radiusCard,
+          padding: '32px',
+          textAlign: 'center',
+          fontSize: '13px',
+          color: appTheme.textSecondary,
+          fontFamily: appTheme.font,
+        }}
+      >
+        Loading documents…
       </div>
     )
   }
 
   if (documents.length === 0) {
     return (
-      <div className="flex items-center justify-center py-16 text-gray-400">
-        <span className="text-sm">No records found.</span>
+      <div
+        style={{
+          backgroundColor: appTheme.cardBg,
+          border: `1px solid ${appTheme.border}`,
+          borderRadius: appTheme.radiusCard,
+          padding: '32px',
+          textAlign: 'center',
+          fontSize: '13px',
+          color: appTheme.textSecondary,
+          fontFamily: appTheme.font,
+        }}
+      >
+        No records found.
       </div>
     )
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200">
-      <table className="min-w-full divide-y divide-gray-200 bg-white text-sm">
-        <thead className="bg-gray-50">
+    <div
+      style={{
+        overflowX: 'auto',
+        borderRadius: appTheme.radiusCard,
+        border: `1px solid ${appTheme.border}`,
+        fontFamily: appTheme.font,
+      }}
+    >
+      <table style={{ minWidth: '100%', borderCollapse: 'collapse', backgroundColor: appTheme.cardBg, fontSize: '13px' }}>
+        <thead>
           <tr>
             {['ID', 'Document Title', 'KB Collection', 'Classification', 'SDLC', 'Domain', 'Persona(s)', 'Status', ''].map(
-              (col) => (
-                <th
-                  key={col}
-                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
-                >
-                  {col}
-                </th>
-              ),
+              (col) => <th key={col} style={thStyle}>{col}</th>
             )}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody>
           {documents.map((doc) => {
             const sdlcTags = getTagsByType(doc.tags, 'sdlc')
             const domainTags = getTagsByType(doc.tags, 'domain')
-            const personaTags = (doc.tags ?? []).filter((t) => t.tag_name.startsWith('persona:') && t.status === 'active')
-            const collectionName = collectionMap.get(doc.knowledge_collection_id) ?? truncateId(doc.knowledge_collection_id)
+            const personaTags = (doc.tags ?? []).filter(
+              (t) => t.tag_name.startsWith('persona:') && t.status === 'active'
+            )
+            const collectionName =
+              collectionMap.get(doc.knowledge_collection_id) ?? truncateId(doc.knowledge_collection_id)
 
             return (
-              <tr key={doc.knowledge_document_id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-mono text-xs text-gray-500">
+              <tr
+                key={doc.knowledge_document_id}
+                style={{ transition: 'background-color 100ms' }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = appTheme.rowAlt)}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '11px', color: appTheme.textSecondary }}>
                   {truncateId(doc.knowledge_document_id)}
                 </td>
-                <td className="px-4 py-3 font-medium text-gray-900 max-w-[200px] truncate">
+                <td style={{ ...tdStyle, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   <button
                     type="button"
                     onClick={() => onView(doc.knowledge_document_id)}
-                    className="hover:text-indigo-600 hover:underline text-left"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: appTheme.textPrimary,
+                      textAlign: 'left',
+                      fontFamily: appTheme.font,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = appTheme.accentBlue)}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = appTheme.textPrimary)}
                   >
                     {doc.title}
                   </button>
                 </td>
-                <td className="px-4 py-3 text-gray-700 max-w-[160px] truncate text-xs">
+                <td style={{ ...tdStyle, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: appTheme.textSecondary }}>
                   {collectionName}
                 </td>
-                <td className="px-4 py-3">
+                <td style={tdStyle}>
                   <ClassificationBadge level={doc.governance?.classification_level} />
                 </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-1">
+                <td style={tdStyle}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                     {sdlcTags.length > 0
                       ? sdlcTags.map((t) => (
-                          <span key={t.knowledge_document_tag_id} className="rounded bg-indigo-50 px-1.5 py-0.5 text-xs text-indigo-700">
-                            {t.tag_name}
-                          </span>
+                          <InlineTag key={t.knowledge_document_tag_id} label={t.tag_name} bg="#EFF6FF" color={appTheme.accentBlue} />
                         ))
-                      : <span className="text-xs text-gray-400">—</span>}
+                      : <span style={{ fontSize: '12px', color: appTheme.textPlaceholder }}>—</span>}
                   </div>
                 </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-1">
+                <td style={tdStyle}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                     {domainTags.length > 0
                       ? domainTags.map((t) => (
-                          <span key={t.knowledge_document_tag_id} className="rounded bg-teal-50 px-1.5 py-0.5 text-xs text-teal-700">
-                            {t.tag_name}
-                          </span>
+                          <InlineTag key={t.knowledge_document_tag_id} label={t.tag_name} bg="#F0FDFA" color="#0F766E" />
                         ))
-                      : <span className="text-xs text-gray-400">—</span>}
+                      : <span style={{ fontSize: '12px', color: appTheme.textPlaceholder }}>—</span>}
                   </div>
                 </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-1">
+                <td style={tdStyle}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                     {personaTags.length > 0
                       ? personaTags.map((t) => (
-                          <span key={t.knowledge_document_tag_id} className="rounded bg-purple-50 px-1.5 py-0.5 text-xs text-purple-700">
-                            {t.tag_name.replace('persona:', '')}
-                          </span>
+                          <InlineTag key={t.knowledge_document_tag_id} label={t.tag_name.replace('persona:', '')} bg="#FAF5FF" color="#7C3AED" />
                         ))
-                      : <span className="text-xs text-gray-400">—</span>}
+                      : <span style={{ fontSize: '12px', color: appTheme.textPlaceholder }}>—</span>}
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td style={tdStyle}>
                   <StatusBadge status={doc.status} />
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td style={{ ...tdStyle, textAlign: 'right' }}>
                   <ActionsMenu
                     status={doc.status}
                     onView={() => onView(doc.knowledge_document_id)}

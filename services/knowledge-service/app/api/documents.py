@@ -66,6 +66,8 @@ class GovernanceOut(BaseModel):
     review_date: date | None
     expiry_date: date | None
     review_status: str | None
+    allow_external_llm_usage: bool
+    llm_model_id: UUID | None
 
     model_config = {"from_attributes": True}
 
@@ -143,6 +145,7 @@ async def list_all(
     classification_level: str | None = Query(None),
     sdlc: str | None = Query(None),
     domain: str | None = Query(None),
+    persona: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
 ):
@@ -156,6 +159,7 @@ async def list_all(
         classification_level=classification_level,
         sdlc=sdlc,
         domain=domain,
+        persona=persona,
     )
 
 

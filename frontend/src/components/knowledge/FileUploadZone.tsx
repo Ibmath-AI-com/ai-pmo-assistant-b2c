@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Upload } from 'lucide-react'
+import { appTheme } from '@/lib/theme'
 
 interface FileUploadZoneProps {
   onFileSelect: (file: File) => void
@@ -36,45 +36,76 @@ export function FileUploadZone({ onFileSelect, selectedFile, accept = ACCEPTED_T
       onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
-      className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
-        isDragging ? 'border-indigo-400 bg-indigo-50' : 'border-gray-300 bg-gray-50 hover:border-gray-400'
-      }`}
+      style={{
+        border: `2px dashed ${isDragging ? appTheme.accentBlue : appTheme.border}`,
+        borderRadius: appTheme.radiusCard,
+        backgroundColor: isDragging ? '#EFF6FF' : '#F8FAFC',
+        padding: '24px',
+        textAlign: 'center',
+        transition: 'border-color 150ms ease, background-color 150ms ease',
+        fontFamily: appTheme.font,
+      }}
     >
       <input
         ref={inputRef}
         type="file"
         accept={accept}
         onChange={handleChange}
-        className="hidden"
+        style={{ display: 'none' }}
       />
 
       {selectedFile ? (
-        <div className="flex flex-col items-center gap-1">
-          <Upload className="h-6 w-6 text-indigo-500" />
-          <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
-          <p className="text-xs text-gray-500">{formatBytes(selectedFile.size)}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: '22px' }}>📄</span>
+          <p style={{ fontSize: '13px', fontWeight: 600, color: appTheme.textPrimary, margin: 0 }}>
+            {selectedFile.name}
+          </p>
+          <p style={{ fontSize: '12px', color: appTheme.textSecondary, margin: 0 }}>
+            {formatBytes(selectedFile.size)}
+          </p>
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="mt-1 text-xs text-indigo-600 underline hover:text-indigo-800"
+            style={{
+              marginTop: '4px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '12px',
+              color: appTheme.accentBlue,
+              textDecoration: 'underline',
+              fontFamily: appTheme.font,
+            }}
           >
             Change file
           </button>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-2">
-          <Upload className="h-8 w-8 text-gray-400" />
-          <p className="text-sm text-gray-600">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '28px' }}>☁️</span>
+          <p style={{ fontSize: '13px', color: appTheme.textSecondary, margin: 0 }}>
             Drag and drop a file here, or{' '}
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="font-medium text-indigo-600 underline hover:text-indigo-800"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 500,
+                color: appTheme.accentBlue,
+                textDecoration: 'underline',
+                padding: 0,
+                fontFamily: appTheme.font,
+              }}
             >
               Browse
             </button>
           </p>
-          <p className="text-xs text-gray-400">PDF, DOCX, PPTX, XLSX, HTML, JPG, PNG</p>
+          <p style={{ fontSize: '12px', color: appTheme.textPlaceholder, margin: 0 }}>
+            PDF, DOCX, PPTX, XLSX, HTML, JPG, PNG
+          </p>
         </div>
       )}
     </div>

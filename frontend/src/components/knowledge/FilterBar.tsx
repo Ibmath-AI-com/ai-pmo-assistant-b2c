@@ -1,3 +1,4 @@
+import { appTheme, inputStyle } from '@/lib/theme'
 import type { DocumentFilters, KnowledgeCollection } from '@/lib/api/knowledge'
 
 interface FilterBarProps {
@@ -12,38 +13,22 @@ const DOCUMENT_TYPES = ['Policy', 'Procedure', 'Template', 'Guide', 'Reference',
 const CLASSIFICATION_LEVELS = ['Public', 'Internal', 'Confidential', 'Restricted']
 const SDLC_OPTIONS = ['Planning', 'Requirements', 'Design', 'Development', 'Testing', 'Deployment', 'Maintenance', 'All']
 const DOMAIN_OPTIONS = ['HR', 'Finance', 'Legal', 'IT', 'Operations', 'Product', 'Sales', 'Marketing', 'Other']
-const STATUS_OPTIONS = ['draft', 'active', 'archived', 'deleted']
+const STATUS_OPTIONS = ['draft', 'active', 'archived']
 
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-  placeholder,
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  options: { value: string; label: string }[]
-  placeholder: string
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium text-gray-600">{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-      >
-        <option value="">{placeholder}</option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  )
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  appearance: 'none',
+  backgroundImage:
+    'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'><path d=\'M3 4.5L6 7.5L9 4.5\' stroke=\'%2394A3B8\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' fill=\'none\'/></svg>")',
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 12px center',
+  paddingRight: '32px',
+}
+
+const gridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(4, 1fr)',
+  gap: '12px',
 }
 
 export function FilterBar({ filters, onChange, onSearch, onReset, collections }: FilterBarProps) {
@@ -51,99 +36,139 @@ export function FilterBar({ filters, onChange, onSearch, onReset, collections }:
     onChange({ ...filters, [key]: value || undefined })
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+    <div
+      style={{
+        backgroundColor: appTheme.cardBg,
+        border: `1px solid ${appTheme.border}`,
+        borderRadius: appTheme.radiusCard,
+        padding: '16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        fontFamily: appTheme.font,
+      }}
+    >
       {/* Row 1 */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">Document Title</label>
-          <input
-            type="text"
-            value={filters.search ?? ''}
-            onChange={(e) => set('search')(e.target.value)}
-            placeholder="Search title..."
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          />
-        </div>
+      <div style={gridStyle}>
+        <input
+          type="text"
+          value={filters.search ?? ''}
+          onChange={(e) => set('search')(e.target.value)}
+          placeholder="Document Title"
+          style={inputStyle}
+        />
 
-        <Select
-          label="Document Type"
+        <select
           value={filters.document_type ?? ''}
-          onChange={set('document_type')}
-          options={DOCUMENT_TYPES.map((t) => ({ value: t, label: t }))}
-          placeholder="All types"
-        />
+          onChange={(e) => set('document_type')(e.target.value)}
+          style={{ ...selectStyle, color: filters.document_type ? appTheme.textPrimary : appTheme.textPlaceholder }}
+        >
+          <option value="">Document Type</option>
+          {DOCUMENT_TYPES.map((t) => <option key={t} value={t} style={{ color: appTheme.textPrimary }}>{t}</option>)}
+        </select>
 
-        <Select
-          label="Document Collection"
+        <select
           value={filters.knowledge_collection_id ?? ''}
-          onChange={set('knowledge_collection_id')}
-          options={collections.map((c) => ({
-            value: c.knowledge_collection_id,
-            label: c.collection_name,
-          }))}
-          placeholder="All collections"
-        />
+          onChange={(e) => set('knowledge_collection_id')(e.target.value)}
+          style={{ ...selectStyle, color: filters.knowledge_collection_id ? appTheme.textPrimary : appTheme.textPlaceholder }}
+        >
+          <option value="">Document Collection</option>
+          {collections.map((c) => (
+            <option key={c.knowledge_collection_id} value={c.knowledge_collection_id} style={{ color: appTheme.textPrimary }}>
+              {c.collection_name}
+            </option>
+          ))}
+        </select>
 
-        <Select
-          label="Classification Level"
+        <select
           value={filters.classification_level ?? ''}
-          onChange={set('classification_level')}
-          options={CLASSIFICATION_LEVELS.map((l) => ({ value: l, label: l }))}
-          placeholder="All levels"
-        />
+          onChange={(e) => set('classification_level')(e.target.value)}
+          style={{ ...selectStyle, color: filters.classification_level ? appTheme.textPrimary : appTheme.textPlaceholder }}
+        >
+          <option value="">Classification Level</option>
+          {CLASSIFICATION_LEVELS.map((l) => <option key={l} value={l} style={{ color: appTheme.textPrimary }}>{l}</option>)}
+        </select>
       </div>
 
       {/* Row 2 */}
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Select
-          label="SDLC"
+      <div style={gridStyle}>
+        <select
           value={filters.sdlc ?? ''}
-          onChange={set('sdlc')}
-          options={SDLC_OPTIONS.map((s) => ({ value: s, label: s }))}
-          placeholder="All phases"
-        />
+          onChange={(e) => set('sdlc')(e.target.value)}
+          style={{ ...selectStyle, color: filters.sdlc ? appTheme.textPrimary : appTheme.textPlaceholder }}
+        >
+          <option value="">SDLC</option>
+          {SDLC_OPTIONS.map((s) => <option key={s} value={s} style={{ color: appTheme.textPrimary }}>{s}</option>)}
+        </select>
 
-        <Select
-          label="Domain"
+        <select
           value={filters.domain ?? ''}
-          onChange={set('domain')}
-          options={DOMAIN_OPTIONS.map((d) => ({ value: d, label: d }))}
-          placeholder="All domains"
+          onChange={(e) => set('domain')(e.target.value)}
+          style={{ ...selectStyle, color: filters.domain ? appTheme.textPrimary : appTheme.textPlaceholder }}
+        >
+          <option value="">Domain</option>
+          {DOMAIN_OPTIONS.map((d) => <option key={d} value={d} style={{ color: appTheme.textPrimary }}>{d}</option>)}
+        </select>
+
+        <input
+          type="text"
+          value={filters.persona ?? ''}
+          onChange={(e) => set('persona')(e.target.value)}
+          placeholder="Persona Relevance"
+          style={inputStyle}
         />
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">Persona Relevance</label>
-          <input
-            type="text"
-            placeholder="Any persona..."
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          />
-        </div>
-
-        <Select
-          label="Status"
+        <select
           value={filters.status ?? ''}
-          onChange={set('status')}
-          options={STATUS_OPTIONS.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }))}
-          placeholder="All statuses"
-        />
+          onChange={(e) => set('status')(e.target.value)}
+          style={{ ...selectStyle, color: filters.status ? appTheme.textPrimary : appTheme.textPlaceholder }}
+        >
+          <option value="">Status</option>
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s} style={{ color: appTheme.textPrimary }}>
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Actions */}
-      <div className="mt-4 flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onReset}
-          className="rounded-md border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
-        >
-          Reset
-        </button>
+      <div style={{ display: 'flex', gap: '8px' }}>
         <button
           type="button"
           onClick={onSearch}
-          className="rounded-md bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none"
+          style={{
+            height: '40px',
+            padding: '0 24px',
+            border: 'none',
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: appTheme.cyan,
+            color: '#FFFFFF',
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            fontFamily: appTheme.font,
+          }}
         >
           Search
+        </button>
+        <button
+          type="button"
+          onClick={onReset}
+          style={{
+            height: '40px',
+            padding: '0 18px',
+            border: `1px solid ${appTheme.border}`,
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: '#FFFFFF',
+            color: appTheme.textSubtle,
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            fontFamily: appTheme.font,
+          }}
+        >
+          Reset
         </button>
       </div>
     </div>
