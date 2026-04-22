@@ -1,6 +1,6 @@
 import { useReducer, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { appTheme } from '@/lib/theme'
 import { WizardStepIndicator } from '@/components/knowledge/WizardStepIndicator'
 import { BasicInfoStep } from './steps/BasicInfoStep'
 import { GovernanceStep } from './steps/GovernanceStep'
@@ -39,9 +39,9 @@ export interface OptimizationData {
 
 export interface ExtrasData {
   allowLLM: boolean
-  llmModelId: string          // selected model ID when allowLLM is true
-  specificAccess: boolean     // toggle: grant access to a specific user
-  specificAccessUserId: string // selected user UUID when specificAccess is true
+  llmModelId: string
+  specificAccess: boolean
+  specificAccessUserId: string
   setExpiry: boolean
   expiryDate: string
 }
@@ -138,13 +138,11 @@ export function AddDocumentWizard() {
 
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  // Load existing document data when in edit mode
   const { data: existingDoc, isLoading: loadingDoc } = useDocument(editId ?? '')
 
   useEffect(() => {
     if (!existingDoc) return
 
-    // Extract tags by type
     const tagsOf = (type: string) =>
       (existingDoc.tags ?? []).filter((t) => t.tag_type === type && t.status === 'active').map((t) => t.tag_name)
     const personaTags = (existingDoc.tags ?? [])
@@ -183,8 +181,8 @@ export function AddDocumentWizard() {
           priority,
         },
         extras: {
-          allowLLM: !!gov?.review_status,
-          llmModelId: gov?.review_status ?? '',
+          allowLLM: gov?.allow_external_llm_usage ?? false,
+          llmModelId: gov?.llm_model_id ?? '',
           specificAccess: (existingDoc.access_entries?.length ?? 0) > 0,
           specificAccessUserId: existingDoc.access_entries?.[0]?.user_id ?? '',
           setExpiry: !!gov?.expiry_date,
@@ -208,45 +206,56 @@ export function AddDocumentWizard() {
 
   if (isEditMode && loadingDoc) {
     return (
-      <div className="flex items-center justify-center py-24 text-gray-400">
-        <Loader2 className="h-6 w-6 animate-spin" />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '64px 0', color: appTheme.textSecondary, fontFamily: appTheme.font }}>
+        Loading…
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div style={{ fontFamily: appTheme.font, color: appTheme.textPrimary }}>
       {/* Page header */}
-      <div className="flex items-center gap-3">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 700, color: appTheme.textPrimary, margin: 0 }}>
+          {isEditMode ? 'Update Document Settings' : 'Add New Document'}
+        </h1>
         <button
           type="button"
           onClick={() => navigate('/knowledge-hub')}
-          className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          aria-label="Back to list"
+          style={{
+            height: '36px',
+            padding: '0 16px',
+            border: `1px solid ${appTheme.border}`,
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: '#FFFFFF',
+            color: appTheme.textSubtle,
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            fontFamily: appTheme.font,
+          }}
         >
-          <ArrowLeft className="h-5 w-5" />
+          Close
         </button>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">
-            {isEditMode ? 'Update Document Settings' : 'Add New Document'}
-          </h1>
-          <p className="text-sm text-gray-500">
-            {isEditMode
-              ? 'Update the settings for this knowledge document'
-              : 'Fill in each step to create your knowledge document'}
-          </p>
-        </div>
       </div>
 
-      {/* Card */}
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-        {/* Step indicator */}
-        <div className="border-b border-gray-100 px-8 py-6">
-          <WizardStepIndicator steps={STEPS} currentStep={state.step} />
-        </div>
+      {/* Step indicator */}
+      <WizardStepIndicator steps={STEPS} currentStep={state.step} />
 
-        {/* Step content */}
-        <div className="px-8 py-6">
+      {/* Card */}
+      <div
+        style={{
+          backgroundColor: '#FFFFFF',
+          border: `1.5px solid ${appTheme.borderSoft}`,
+          borderRadius: appTheme.radiusCardWizard,
+          padding: '32px',
+          marginTop: '20px',
+          minHeight: '380px',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <div style={{ flex: 1 }}>
           {state.step === 1 && (
             <BasicInfoStep
               data={state.basic}

@@ -1,4 +1,4 @@
-import { Loader2, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react'
+import { appTheme } from '@/lib/theme'
 import { useJob, useReindexDocument } from '@/lib/hooks/useKnowledge'
 
 interface IngestionJobStatusProps {
@@ -12,8 +12,8 @@ export function IngestionJobStatus({ jobId, documentId }: IngestionJobStatusProp
 
   if (!job) {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-400">
-        <Loader2 className="h-4 w-4 animate-spin" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: appTheme.textSecondary, fontFamily: appTheme.font }}>
+        <span>⏳</span>
         <span>Loading job status…</span>
       </div>
     )
@@ -21,8 +21,8 @@ export function IngestionJobStatus({ jobId, documentId }: IngestionJobStatusProp
 
   if (job.job_status === 'completed') {
     return (
-      <div className="flex items-center gap-2 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
-        <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: appTheme.radiusInput, backgroundColor: '#D1FAE5', color: '#065F46', fontSize: '13px', fontFamily: appTheme.font }}>
+        <span>✓</span>
         <span>Document indexed successfully</span>
       </div>
     )
@@ -30,40 +30,54 @@ export function IngestionJobStatus({ jobId, documentId }: IngestionJobStatusProp
 
   if (job.job_status === 'failed') {
     return (
-      <div className="flex flex-col gap-2 rounded-md bg-red-50 px-3 py-2">
-        <div className="flex items-center gap-2 text-sm text-red-700">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '8px 12px', borderRadius: appTheme.radiusInput, backgroundColor: '#FEE2E2', fontFamily: appTheme.font }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#991B1B' }}>
+          <span>⚠</span>
           <span>Indexing failed{job.error_message ? `: ${job.error_message}` : ''}</span>
         </div>
         <button
           type="button"
           onClick={() => reindex.mutate(documentId)}
           disabled={reindex.isPending}
-          className="inline-flex items-center gap-1.5 self-start rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+          style={{
+            alignSelf: 'flex-start',
+            height: '28px',
+            padding: '0 12px',
+            border: `1px solid #F87171`,
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: '#FFFFFF',
+            color: '#DC2626',
+            fontSize: '12px',
+            fontWeight: 500,
+            cursor: reindex.isPending ? 'not-allowed' : 'pointer',
+            opacity: reindex.isPending ? 0.6 : 1,
+            fontFamily: appTheme.font,
+          }}
         >
-          {reindex.isPending
-            ? <Loader2 className="h-3 w-3 animate-spin" />
-            : <RefreshCw className="h-3 w-3" />}
-          Retry
+          {reindex.isPending ? 'Retrying…' : '↺ Retry'}
         </button>
       </div>
     )
   }
 
-  // queued or processing
   const pct = job.progress_pct ?? 0
   const label = job.job_status === 'queued' ? 'Queued for indexing…' : `Indexing document… ${pct}%`
 
   return (
-    <div className="flex flex-col gap-1.5 rounded-md bg-indigo-50 px-3 py-2">
-      <div className="flex items-center gap-2 text-sm text-indigo-700">
-        <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '8px 12px', borderRadius: appTheme.radiusInput, backgroundColor: '#EFF6FF', fontFamily: appTheme.font }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: appTheme.accentBlue }}>
+        <span>⏳</span>
         <span>{label}</span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-indigo-100">
+      <div style={{ height: '4px', width: '100%', backgroundColor: '#BFDBFE', borderRadius: '2px', overflow: 'hidden' }}>
         <div
-          className="h-full rounded-full bg-indigo-500 transition-all duration-500"
-          style={{ width: `${Math.max(pct, job.job_status === 'processing' ? 5 : 0)}%` }}
+          style={{
+            height: '100%',
+            borderRadius: '2px',
+            backgroundColor: appTheme.accentBlue,
+            width: `${Math.max(pct, job.job_status === 'processing' ? 5 : 0)}%`,
+            transition: 'width 500ms ease',
+          }}
         />
       </div>
     </div>

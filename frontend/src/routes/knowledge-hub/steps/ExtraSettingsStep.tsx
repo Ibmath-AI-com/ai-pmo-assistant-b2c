@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { appTheme, inputStyle, sectionLabelStyle } from '@/lib/theme'
 import { useUpdateGovernance, useUpdateAccess, useLLMModels, useKnowledgeUsers } from '@/lib/hooks/useKnowledge'
 import type { ExtrasData, WizardAction } from '../AddDocumentWizard'
 
@@ -12,46 +12,85 @@ interface ExtraSettingsStepProps {
   onSubmit: () => void
 }
 
-// ─── Toggle Row ───────────────────────────────────────────────────────────────
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  appearance: 'none',
+  backgroundImage:
+    'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'><path d=\'M3 4.5L6 7.5L9 4.5\' stroke=\'%2394A3B8\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' fill=\'none\'/></svg>")',
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 12px center',
+  paddingRight: '32px',
+}
 
-interface ToggleRowProps {
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        width: '44px',
+        height: '24px',
+        flexShrink: 0,
+        borderRadius: '12px',
+        border: 'none',
+        cursor: 'pointer',
+        backgroundColor: checked ? appTheme.accentBlue : appTheme.stepInactiveBg,
+        transition: 'background-color 200ms',
+        padding: 0,
+      }}
+    >
+      <span
+        style={{
+          position: 'absolute',
+          top: '2px',
+          left: checked ? '22px' : '2px',
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          backgroundColor: '#FFFFFF',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+          transition: 'left 200ms',
+        }}
+      />
+    </button>
+  )
+}
+
+function ToggleRow({ label, description, checked, onChange, children }: {
   label: string
   description?: string
   checked: boolean
   onChange: (v: boolean) => void
   children?: React.ReactNode
-}
-
-function ToggleRow({ label, description, checked, onChange, children }: ToggleRowProps) {
+}) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
-      <div className="flex items-center justify-between gap-4">
+    <div
+      style={{
+        border: `1px solid ${appTheme.border}`,
+        borderRadius: appTheme.radiusCard,
+        backgroundColor: '#F8FAFC',
+        padding: '14px 16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        fontFamily: appTheme.font,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
         <div>
-          <p className="text-sm font-medium text-gray-800">{label}</p>
-          {description && <p className="text-xs text-gray-500">{description}</p>}
+          <p style={{ margin: 0, fontSize: '13px', fontWeight: 500, color: appTheme.textPrimary }}>{label}</p>
+          {description && <p style={{ margin: '2px 0 0', fontSize: '12px', color: appTheme.textSecondary }}>{description}</p>}
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={checked}
-          onClick={() => onChange(!checked)}
-          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
-            checked ? 'bg-indigo-600' : 'bg-gray-300'
-          }`}
-        >
-          <span
-            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
-              checked ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          />
-        </button>
+        <Toggle checked={checked} onChange={onChange} />
       </div>
-      {checked && children && <div className="pt-1">{children}</div>}
+      {checked && children && <div>{children}</div>}
     </div>
   )
 }
-
-// ─── Step component ───────────────────────────────────────────────────────────
 
 export function ExtraSettingsStep({ data, documentId, classificationLevel, dispatch, onBack, onSubmit }: ExtraSettingsStepProps) {
   const [apiError, setApiError] = useState<string | null>(null)
@@ -70,17 +109,16 @@ export function ExtraSettingsStep({ data, documentId, classificationLevel, dispa
     setApiError(null)
 
     try {
-      // Save governance: classification + LLM model ID in review_status
       await updateGovernance.mutateAsync({
         id: documentId,
         data: {
           classification_level: classificationLevel as 'Public' | 'Internal' | 'Confidential' | 'Restricted',
-          review_status: data.allowLLM && data.llmModelId ? data.llmModelId : undefined,
+          allow_external_llm_usage: data.allowLLM,
+          llm_model_id: data.allowLLM && data.llmModelId ? data.llmModelId : undefined,
           expiry_date: data.setExpiry && data.expiryDate ? data.expiryDate : undefined,
         },
       })
 
-      // Save user access if specific access is toggled on with a user selected
       if (data.specificAccess && data.specificAccessUserId) {
         await updateAccess.mutateAsync({
           id: documentId,
@@ -101,96 +139,86 @@ export function ExtraSettingsStep({ data, documentId, classificationLevel, dispa
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="text-base font-semibold text-gray-900">Extra Settings</h2>
-        <p className="mt-0.5 text-sm text-gray-500">Configure access control and additional options.</p>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={sectionLabelStyle}>Extra Settings</div>
 
       {apiError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div style={{ padding: '10px 12px', borderRadius: appTheme.radiusInput, backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: appTheme.danger, fontSize: '13px' }}>
           {apiError}
         </div>
       )}
 
-      {/* Allow External LLM Usage */}
       <ToggleRow
         label="Allow External LLM Usage"
         description="Permit this document to be used by an external AI model."
         checked={data.allowLLM}
-        onChange={(v) => {
-          set('allowLLM')(v)
-          if (!v) set('llmModelId')('')
-        }}
+        onChange={(v) => { set('allowLLM')(v); if (!v) set('llmModelId')('') }}
       >
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">Select LLM Model</label>
-          <select
-            value={data.llmModelId}
-            onChange={(e) => set('llmModelId')(e.target.value)}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:max-w-[320px]"
-          >
-            <option value="">Select model…</option>
-            {llmModels.map((m) => (
-              <option key={m.llm_model_id} value={m.llm_model_id}>
-                {m.provider_name} — {m.model_name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          value={data.llmModelId}
+          onChange={(e) => set('llmModelId')(e.target.value)}
+          style={{ ...selectStyle, color: data.llmModelId ? appTheme.textPrimary : appTheme.textPlaceholder, maxWidth: '320px' }}
+        >
+          <option value="">Select LLM model…</option>
+          {llmModels.map((m) => (
+            <option key={m.llm_model_id} value={m.llm_model_id} style={{ color: appTheme.textPrimary }}>
+              {m.provider_name} — {m.model_name}
+            </option>
+          ))}
+        </select>
       </ToggleRow>
 
-      {/* Specific Access */}
       <ToggleRow
         label="Specific Access"
         description="Grant read access to a specific user."
         checked={data.specificAccess}
-        onChange={(v) => {
-          set('specificAccess')(v)
-          if (!v) set('specificAccessUserId')('')
-        }}
+        onChange={(v) => { set('specificAccess')(v); if (!v) set('specificAccessUserId')('') }}
       >
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">Select User</label>
-          <select
-            value={data.specificAccessUserId}
-            onChange={(e) => set('specificAccessUserId')(e.target.value)}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:max-w-[320px]"
-          >
-            <option value="">Select user…</option>
-            {users.map((u) => (
-              <option key={u.user_id} value={u.user_id}>
-                {u.username} ({u.email})
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          value={data.specificAccessUserId}
+          onChange={(e) => set('specificAccessUserId')(e.target.value)}
+          style={{ ...selectStyle, color: data.specificAccessUserId ? appTheme.textPrimary : appTheme.textPlaceholder, maxWidth: '320px' }}
+        >
+          <option value="">Select user…</option>
+          {users.map((u) => (
+            <option key={u.user_id} value={u.user_id} style={{ color: appTheme.textPrimary }}>
+              {u.username} ({u.email})
+            </option>
+          ))}
+        </select>
       </ToggleRow>
 
-      {/* Set Expiry Date */}
       <ToggleRow
         label="Set Expiry Date"
         description="Automatically exclude this document from retrieval after a date."
         checked={data.setExpiry}
         onChange={(v) => set('setExpiry')(v)}
       >
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">Expiry Date</label>
-          <input
-            type="date"
-            value={data.expiryDate}
-            onChange={(e) => set('expiryDate')(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:max-w-[220px]"
-          />
-        </div>
+        <input
+          type="date"
+          value={data.expiryDate}
+          onChange={(e) => set('expiryDate')(e.target.value)}
+          style={{ ...inputStyle, maxWidth: '220px' }}
+        />
       </ToggleRow>
 
       {/* Footer */}
-      <div className="flex justify-between pt-2">
+      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px' }}>
         <button
           type="button"
           onClick={onBack}
-          className="rounded-md border border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+          style={{
+            height: '40px',
+            padding: '0 22px',
+            border: `1px solid ${appTheme.border}`,
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: '#FFFFFF',
+            color: appTheme.textSubtle,
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            fontFamily: appTheme.font,
+          }}
         >
           Back
         </button>
@@ -198,10 +226,21 @@ export function ExtraSettingsStep({ data, documentId, classificationLevel, dispa
           type="button"
           onClick={handleSubmit}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          style={{
+            height: '40px',
+            padding: '0 28px',
+            border: 'none',
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: appTheme.primaryBlue,
+            color: '#FFFFFF',
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            opacity: isLoading ? 0.7 : 1,
+            fontFamily: appTheme.font,
+          }}
         >
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Submit
+          {isLoading ? 'Submitting…' : 'Submit'}
         </button>
       </div>
     </div>

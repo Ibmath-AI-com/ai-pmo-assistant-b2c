@@ -22,6 +22,8 @@ class GovernanceUpsert(BaseModel):
     review_date: date | None = None
     expiry_date: date | None = None
     review_status: str | None = None
+    allow_external_llm_usage: bool = False
+    llm_model_id: UUID | None = None
 
 
 class GovernanceResponse(BaseModel):
@@ -34,6 +36,8 @@ class GovernanceResponse(BaseModel):
     review_date: date | None
     expiry_date: date | None
     review_status: str | None
+    allow_external_llm_usage: bool
+    llm_model_id: UUID | None
 
     model_config = {"from_attributes": True}
 

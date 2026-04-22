@@ -27,6 +27,7 @@ SERVICE_MAP = {
     "/api/v1/ai":            f"http://localhost:8004",
     "/api/v1/prompts":       f"http://localhost:8004",
     "/api/v1/knowledge":     f"http://localhost:8005",
+    "/api/v1/files":         f"http://localhost:8005",
     "/api/v1/templates":     f"http://localhost:8006",
     "/api/v1/reports":       f"http://localhost:8006",
     "/api/v1/admin":         f"http://localhost:8007",

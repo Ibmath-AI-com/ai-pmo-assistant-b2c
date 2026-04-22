@@ -69,6 +69,11 @@ export function PersonaListPage() {
     setApplied(filters)
   }
 
+  function onReset() {
+    setFilters(initialFilters)
+    setApplied(initialFilters)
+  }
+
   function onDownload(p: Persona) {
     const blob = new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -94,40 +99,37 @@ export function PersonaListPage() {
 
   return (
     <div style={{ fontFamily: appTheme.font, color: appTheme.textPrimary }}>
-      <h1 style={{ fontSize: '20px', fontWeight: 700, color: appTheme.textPrimary, margin: '0 0 20px' }}>
-        Personas Management
-      </h1>
-
-      <FilterBar filters={filters} onChange={setFilters} onSearch={onSearch} />
-
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          margin: '16px 0 8px',
-        }}
-      >
-        <span />
-        <button
-          onClick={() => navigate('/personas/new')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            border: 'none',
-            backgroundColor: 'transparent',
-            color: appTheme.accentBlue,
-            fontWeight: 500,
-            fontSize: '13px',
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          Add New Persona
-          <PlusCircle />
-        </button>
+       {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>  
+        <h1 style={{ fontSize: '20px', fontWeight: 700, color: appTheme.textPrimary, margin: 0 }}>
+          Personas Management
+        </h1>
+          <button
+            onClick={() => navigate('/personas/new')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              border: 'none',
+              backgroundColor: 'transparent',
+              color: appTheme.accentBlue,
+              fontWeight: 500,
+              fontSize: '13px',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            Add New Persona
+            <PlusCircle />
+          </button>
       </div>
+
+      <FilterBar
+        filters={filters}
+        onChange={setFilters}
+        onSearch={onSearch}
+        onReset={onReset}
+      />
 
       {isLoading && <EmptyRow>Loading personas…</EmptyRow>}
       {error && <EmptyRow tone="error">Failed to load personas.</EmptyRow>}
@@ -174,10 +176,12 @@ function FilterBar({
   filters,
   onChange,
   onSearch,
+  onReset,
 }: {
   filters: Filters
   onChange: (f: Filters) => void
   onSearch: () => void
+  onReset: () => void
 }) {
   const set = <K extends keyof Filters>(k: K, v: Filters[K]) => onChange({ ...filters, [k]: v })
   const colStyle: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }
@@ -213,7 +217,7 @@ function FilterBar({
         <Select value={filters.personaRelevance} onChange={(v) => set('personaRelevance', v)} placeholder="Persona Relevance" options={['High', 'Medium', 'Low']} />
         <Select value={filters.status} onChange={(v) => set('status', v)} placeholder="Status" options={STATUS_OPTIONS} />
       </div>
-      <div>
+      <div style={{ display: 'flex', gap: '8px' }}>
         <button
           type="button"
           onClick={onSearch}
@@ -230,6 +234,23 @@ function FilterBar({
           }}
         >
           Search
+        </button>
+        <button
+          type="button"
+          onClick={onReset}
+          style={{
+            backgroundColor: '#FFFFFF',
+            color: appTheme.textSubtle,
+            border: `1px solid ${appTheme.border}`,
+            borderRadius: appTheme.radiusInput,
+            padding: '0 18px',
+            height: '40px',
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: 'pointer',
+          }}
+        >
+          Reset
         </button>
       </div>
     </div>
@@ -408,7 +429,7 @@ function EmptyRow({ children, tone }: { children: React.ReactNode; tone?: 'error
         backgroundColor: appTheme.cardBg,
         border: `1px solid ${appTheme.border}`,
         borderRadius: appTheme.radiusCard,
-        padding: '24px',
+        padding: '32px',
         textAlign: 'center',
         fontSize: '13px',
         color: tone === 'error' ? appTheme.danger : appTheme.textSecondary,

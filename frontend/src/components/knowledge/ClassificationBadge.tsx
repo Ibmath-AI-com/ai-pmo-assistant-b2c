@@ -1,18 +1,33 @@
+import { appTheme } from '@/lib/theme'
+
 interface ClassificationBadgeProps {
   level: 'Public' | 'Internal' | 'Confidential' | 'Restricted' | null | undefined
 }
 
 const config = {
-  Public: 'bg-green-100 text-green-800',
-  Internal: 'bg-blue-100 text-blue-800',
-  Confidential: 'bg-orange-100 text-orange-800',
-  Restricted: 'bg-red-100 text-red-800',
+  Public:       { bg: '#DCFCE7', color: '#166534' },
+  Internal:     { bg: '#DBEAFE', color: '#1E40AF' },
+  Confidential: { bg: '#FFEDD5', color: '#9A3412' },
+  Restricted:   { bg: '#FEE2E2', color: '#991B1B' },
 }
 
 export function ClassificationBadge({ level }: ClassificationBadgeProps) {
-  if (!level) return <span className="text-xs text-gray-400">—</span>
+  if (!level) return <span style={{ fontSize: '12px', color: appTheme.textPlaceholder }}>—</span>
+  const c = config[level]
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${config[level]}`}>
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        borderRadius: '20px',
+        padding: '2px 8px',
+        fontSize: '12px',
+        fontWeight: 500,
+        backgroundColor: c.bg,
+        color: c.color,
+        fontFamily: appTheme.font,
+      }}
+    >
       {level}
     </span>
   )

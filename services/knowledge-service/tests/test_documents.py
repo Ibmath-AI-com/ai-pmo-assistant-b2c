@@ -45,7 +45,7 @@ async def test_list_filter_by_collection(client):
         "knowledge_collection_id": col_id,
         "title": "Filtered Doc",
     })
-    resp = await client.get(f"/api/v1/knowledge/documents?collection_id={col_id}")
+    resp = await client.get(f"/api/v1/knowledge/documents?knowledge_collection_id={col_id}")
     assert resp.status_code == 200
     assert all(d["knowledge_collection_id"] == col_id for d in resp.json())
 
@@ -58,7 +58,7 @@ async def test_list_filter_by_title(client):
         "knowledge_collection_id": col_id,
         "title": f"UniqueTitle-{unique}",
     })
-    resp = await client.get(f"/api/v1/knowledge/documents?title=UniqueTitle-{unique}")
+    resp = await client.get(f"/api/v1/knowledge/documents?search=UniqueTitle-{unique}")
     assert resp.status_code == 200
     assert len(resp.json()) >= 1
 

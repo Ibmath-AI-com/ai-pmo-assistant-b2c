@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { appTheme } from '@/lib/theme'
 
 interface TagChipProps {
   label: string
@@ -7,16 +7,39 @@ interface TagChipProps {
 
 export function TagChip({ label, onRemove }: TagChipProps) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        borderRadius: '20px',
+        padding: '2px 10px',
+        fontSize: '12px',
+        fontWeight: 500,
+        backgroundColor: '#EFF6FF',
+        color: appTheme.accentBlue,
+        fontFamily: appTheme.font,
+      }}
+    >
       {label}
       {onRemove && (
         <button
           type="button"
           onClick={onRemove}
-          className="ml-0.5 rounded-full p-0.5 hover:bg-indigo-100 focus:outline-none"
           aria-label={`Remove ${label}`}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0 0 0 2px',
+            color: appTheme.textSecondary,
+            fontSize: '15px',
+            lineHeight: 1,
+            display: 'flex',
+            alignItems: 'center',
+          }}
         >
-          <X className="h-3 w-3" />
+          ×
         </button>
       )}
     </span>

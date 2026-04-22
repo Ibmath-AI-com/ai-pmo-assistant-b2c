@@ -89,6 +89,7 @@ async def list_documents(
     classification_level: str | None = None,
     sdlc: str | None = None,
     domain: str | None = None,
+    persona: str | None = None,
 ) -> list[KnowledgeDocument]:
     from sqlalchemy import select as sa_select
     from sqlalchemy.orm import selectinload
@@ -143,6 +144,16 @@ async def list_documents(
             .scalar_subquery()
         )
         stmt = stmt.where(KnowledgeDocument.knowledge_document_id.in_(domain_subq))
+    if persona:
+        persona_subq = (
+            sa_select(KnowledgeDocumentTag.knowledge_document_id)
+            .where(
+                KnowledgeDocumentTag.tag_name == f"persona:{persona}",
+                KnowledgeDocumentTag.status == "active",
+            )
+            .scalar_subquery()
+        )
+        stmt = stmt.where(KnowledgeDocument.knowledge_document_id.in_(persona_subq))
 
     result = await db.execute(stmt)
     return list(result.scalars().all())

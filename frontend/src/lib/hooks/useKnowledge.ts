@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  createCollection,
   createDocument,
   fetchCollection,
   fetchCollections,
@@ -50,6 +51,17 @@ export const useCollection = (id: string) =>
     queryFn: () => fetchCollection(id),
     enabled: !!id,
   })
+
+export const useCreateCollection = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: { collection_code: string; collection_name: string; description?: string }) =>
+      createCollection(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: knowledgeKeys.collections })
+    },
+  })
+}
 
 // ─── Document Queries ─────────────────────────────────────────────────────────
 

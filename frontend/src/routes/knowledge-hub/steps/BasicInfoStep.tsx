@@ -1,24 +1,151 @@
 import { useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { appTheme, inputStyle, textareaStyle, sectionLabelStyle } from '@/lib/theme'
 import { FileUploadZone } from '@/components/knowledge/FileUploadZone'
 import { IngestionJobStatus } from '@/components/knowledge/IngestionJobStatus'
-import { useCollections, useCreateDocument, useUpdateDocument, useUploadFile, useJobs } from '@/lib/hooks/useKnowledge'
+import {
+  useCollections,
+  useCreateCollection,
+  useCreateDocument,
+  useUpdateDocument,
+  useUploadFile,
+  useJobs,
+} from '@/lib/hooks/useKnowledge'
 import type { BasicInfoData, WizardAction } from '../AddDocumentWizard'
 
 interface BasicInfoStepProps {
   data: BasicInfoData
   dispatch: React.Dispatch<WizardAction>
   onNext: () => void
-  /** Present in edit mode — skips document creation and updates instead */
   editDocumentId?: string
 }
 
 const DOCUMENT_TYPES = ['Policy', 'Procedure', 'Template', 'Guide', 'Reference', 'Report', 'Other']
 
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  appearance: 'none',
+  backgroundImage:
+    'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'><path d=\'M3 4.5L6 7.5L9 4.5\' stroke=\'%2394A3B8\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' fill=\'none\'/></svg>")',
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 12px center',
+  paddingRight: '32px',
+}
+
 interface FieldError {
   title?: string
   knowledge_collection_id?: string
 }
+
+// ─── Inline "New Collection" mini-form ───────────────────────────────────────
+
+function NewCollectionForm({
+  onCreated,
+  onCancel,
+}: {
+  onCreated: (id: string) => void
+  onCancel: () => void
+}) {
+  const [name, setName] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const createCollection = useCreateCollection()
+
+  const handleCreate = async () => {
+    const trimmed = name.trim()
+    if (!trimmed) { setError('Collection name is required'); return }
+    setError(null)
+    try {
+      const slugify = (s: string) =>
+        s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 50) ||
+        `col_${Date.now().toString(36)}`
+      const created = await createCollection.mutateAsync({
+        collection_code: slugify(trimmed),
+        collection_name: trimmed,
+      })
+      onCreated(created.knowledge_collection_id)
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : Array.isArray(detail)
+          ? detail.map((e: { msg?: string }) => e.msg ?? String(e)).join('; ')
+          : err instanceof Error
+            ? err.message
+            : 'Failed to create collection.'
+      setError(msg)
+    }
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: '6px',
+        padding: '12px',
+        border: `1px solid ${appTheme.borderSoft}`,
+        borderRadius: appTheme.radiusCard,
+        backgroundColor: '#F0F4FF',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        fontFamily: appTheme.font,
+      }}
+    >
+      <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: appTheme.accentBlue }}>
+        New Collection
+      </p>
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreate() } }}
+        placeholder="Collection name"
+        autoFocus
+        style={inputStyle}
+      />
+      {error && <p style={{ margin: 0, fontSize: '12px', color: appTheme.danger }}>{error}</p>}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={createCollection.isPending}
+          style={{
+            height: '32px',
+            padding: '0 16px',
+            border: 'none',
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: appTheme.accentBlue,
+            color: '#FFFFFF',
+            fontSize: '12px',
+            fontWeight: 500,
+            cursor: createCollection.isPending ? 'not-allowed' : 'pointer',
+            opacity: createCollection.isPending ? 0.7 : 1,
+            fontFamily: appTheme.font,
+          }}
+        >
+          {createCollection.isPending ? 'Creating…' : 'Create'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          style={{
+            height: '32px',
+            padding: '0 14px',
+            border: `1px solid ${appTheme.border}`,
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: '#FFFFFF',
+            color: appTheme.textSubtle,
+            fontSize: '12px',
+            cursor: 'pointer',
+            fontFamily: appTheme.font,
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Step component ───────────────────────────────────────────────────────────
 
 export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicInfoStepProps) {
   const isEditMode = !!editDocumentId
@@ -26,13 +153,13 @@ export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicI
   const [errors, setErrors] = useState<FieldError>({})
   const [apiError, setApiError] = useState<string | null>(null)
   const [createdDocId, setCreatedDocId] = useState<string | null>(null)
+  const [showNewCollection, setShowNewCollection] = useState(false)
 
   const { data: collections = [] } = useCollections()
   const createDocument = useCreateDocument()
   const updateDocument = useUpdateDocument()
   const uploadFile = useUploadFile()
 
-  // Poll jobs only after a document has been created with a file
   const { data: jobs = [] } = useJobs()
   const trackId = createdDocId ?? (isEditMode ? editDocumentId : null)
   const ingestionJob = trackId
@@ -56,7 +183,6 @@ export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicI
 
     try {
       if (isEditMode) {
-        // Edit mode: update existing document (no file re-upload per use case spec)
         await updateDocument.mutateAsync({
           id: editDocumentId,
           data: {
@@ -70,7 +196,6 @@ export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicI
         return
       }
 
-      // Create mode: upload file then create document
       let fileId: string | null = data.fileId
       if (data.file && !fileId) {
         const formData = new FormData()
@@ -105,111 +230,130 @@ export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicI
   const isLoading = createDocument.isPending || updateDocument.isPending || uploadFile.isPending
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="text-base font-semibold text-gray-900">Basic Information</h2>
-        <p className="mt-0.5 text-sm text-gray-500">Enter the core details about this document.</p>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={sectionLabelStyle}>Basic Information</div>
 
       {apiError && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 border border-red-200">
+        <div
+          style={{
+            padding: '10px 12px',
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: '#FEF2F2',
+            border: '1px solid #FCA5A5',
+            color: appTheme.danger,
+            fontSize: '13px',
+            fontFamily: appTheme.font,
+          }}
+        >
           {apiError}
         </div>
       )}
 
       {/* Document Title */}
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">
-          Document Title <span className="text-red-500">*</span>
-        </label>
+      <FieldWrap error={errors.title}>
         <input
           type="text"
           value={data.title}
           onChange={(e) => set('title')(e.target.value)}
           maxLength={500}
-          placeholder="e.g. API Security Policy v2"
-          className={`rounded-md border px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-1 ${
-            errors.title
-              ? 'border-red-400 focus:border-red-400 focus:ring-red-400'
-              : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
-          }`}
+          placeholder="Document Title"
+          style={{
+            ...inputStyle,
+            borderColor: errors.title ? appTheme.danger : appTheme.border,
+          }}
         />
-        {errors.title && <p className="text-xs text-red-600">{errors.title}</p>}
-      </div>
+      </FieldWrap>
 
       {/* Two-column row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {/* Document Type */}
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Document Type</label>
-          <select
-            value={data.document_type}
-            onChange={(e) => set('document_type')(e.target.value)}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          >
-            <option value="">Select type…</option>
-            {DOCUMENT_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <select
+          value={data.document_type}
+          onChange={(e) => set('document_type')(e.target.value)}
+          style={{ ...selectStyle, color: data.document_type ? appTheme.textPrimary : appTheme.textPlaceholder }}
+        >
+          <option value="">Document Type</option>
+          {DOCUMENT_TYPES.map((t) => <option key={t} value={t} style={{ color: appTheme.textPrimary }}>{t}</option>)}
+        </select>
 
-        {/* Knowledge Collection */}
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">
-            Knowledge Collection <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={data.knowledge_collection_id}
-            onChange={(e) => set('knowledge_collection_id')(e.target.value)}
-            className={`rounded-md border bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-1 ${
-              errors.knowledge_collection_id
-                ? 'border-red-400 focus:border-red-400 focus:ring-red-400'
-                : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
-            }`}
-          >
-            <option value="">Select collection…</option>
-            {collections.map((c) => (
-              <option key={c.knowledge_collection_id} value={c.knowledge_collection_id}>
-                {c.collection_name}
-              </option>
-            ))}
-          </select>
-          {errors.knowledge_collection_id && (
-            <p className="text-xs text-red-600">{errors.knowledge_collection_id}</p>
+        {/* Collection selector + inline create */}
+        <div>
+          <FieldWrap error={errors.knowledge_collection_id}>
+            <select
+              value={data.knowledge_collection_id}
+              onChange={(e) => {
+                set('knowledge_collection_id')(e.target.value)
+                setShowNewCollection(false)
+              }}
+              style={{
+                ...selectStyle,
+                color: data.knowledge_collection_id ? appTheme.textPrimary : appTheme.textPlaceholder,
+                borderColor: errors.knowledge_collection_id ? appTheme.danger : appTheme.border,
+              }}
+            >
+              <option value="">Knowledge Collection</option>
+              {collections.map((c) => (
+                <option key={c.knowledge_collection_id} value={c.knowledge_collection_id} style={{ color: appTheme.textPrimary }}>
+                  {c.collection_name}
+                </option>
+              ))}
+            </select>
+          </FieldWrap>
+
+          {!showNewCollection ? (
+            <button
+              type="button"
+              onClick={() => setShowNewCollection(true)}
+              style={{
+                marginTop: '5px',
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontSize: '12px',
+                color: appTheme.accentBlue,
+                cursor: 'pointer',
+                fontFamily: appTheme.font,
+              }}
+            >
+              + New collection
+            </button>
+          ) : (
+            <NewCollectionForm
+              onCreated={(id) => {
+                set('knowledge_collection_id')(id)
+                setShowNewCollection(false)
+              }}
+              onCancel={() => setShowNewCollection(false)}
+            />
           )}
         </div>
       </div>
 
-      {/* Summary Description */}
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Summary Description</label>
-        <textarea
-          value={data.summary_description}
-          onChange={(e) => set('summary_description')(e.target.value)}
-          rows={4}
-          placeholder="Briefly describe what this document covers…"
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        />
-      </div>
+      {/* Summary */}
+      <textarea
+        value={data.summary_description}
+        onChange={(e) => set('summary_description')(e.target.value)}
+        rows={4}
+        placeholder="Summary Description"
+        style={textareaStyle}
+      />
 
-      {/* File Upload — hidden in edit mode per use case spec */}
+      {/* File Upload */}
       {!isEditMode && (
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Attach File</label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 500, color: appTheme.textSecondary }}>
+            Attach File
+          </label>
           <FileUploadZone
-            onFileSelect={(file) => {
-              dispatch({ type: 'SET_BASIC', data: { file, fileId: null } })
-            }}
+            onFileSelect={(file) => dispatch({ type: 'SET_BASIC', data: { file, fileId: null } })}
             selectedFile={data.file}
           />
           {uploadFile.isPending && (
-            <p className="flex items-center gap-1.5 text-xs text-indigo-600">
-              <Loader2 className="h-3 w-3 animate-spin" /> Uploading file…
+            <p style={{ fontSize: '12px', color: appTheme.accentBlue, margin: 0, fontFamily: appTheme.font }}>
+              Uploading file…
             </p>
           )}
           {ingestionJob && (
-            <div className="mt-1">
+            <div style={{ marginTop: '4px' }}>
               <IngestionJobStatus
                 jobId={ingestionJob.document_ingestion_job_id}
                 documentId={ingestionJob.knowledge_document_id}
@@ -220,17 +364,37 @@ export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicI
       )}
 
       {/* Footer */}
-      <div className="flex justify-end pt-2">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '8px' }}>
         <button
           type="button"
           onClick={handleNext}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          style={{
+            height: '40px',
+            padding: '0 28px',
+            border: 'none',
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: appTheme.primaryBlue,
+            color: '#FFFFFF',
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            opacity: isLoading ? 0.7 : 1,
+            fontFamily: appTheme.font,
+          }}
         >
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Next
+          {isLoading ? 'Please wait…' : 'Next'}
         </button>
       </div>
+    </div>
+  )
+}
+
+function FieldWrap({ error, children }: { error?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      {children}
+      {error && <div style={{ fontSize: '12px', color: appTheme.danger, marginTop: '4px' }}>{error}</div>}
     </div>
   )
 }

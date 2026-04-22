@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { appTheme, inputStyle, sectionLabelStyle } from '@/lib/theme'
 import { TagChip } from '@/components/knowledge/TagChip'
 import { useUpdateTags } from '@/lib/hooks/useKnowledge'
 import type { TagUpsert } from '@/lib/api/knowledge'
@@ -18,96 +18,104 @@ const DOMAIN_OPTIONS = ['HR', 'Finance', 'Legal', 'IT', 'Operations', 'Product',
 const PROJECT_TYPE_OPTIONS = ['Agile', 'Waterfall', 'Hybrid', 'DevOps', 'Other']
 const PRIORITY_OPTIONS = ['Low', 'Medium', 'High']
 
-// ─── Multi-select chip field ──────────────────────────────────────────────────
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  appearance: 'none',
+  backgroundImage:
+    'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'><path d=\'M3 4.5L6 7.5L9 4.5\' stroke=\'%2394A3B8\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' fill=\'none\'/></svg>")',
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 12px center',
+  paddingRight: '32px',
+}
 
-interface MultiSelectFieldProps {
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: appTheme.textSecondary, marginBottom: '4px', fontFamily: appTheme.font }}>
+      {children}
+    </label>
+  )
+}
+
+function MultiSelectField({ label, options, selected, onAdd, onRemove }: {
   label: string
   options: string[]
   selected: string[]
-  onAdd: (value: string) => void
-  onRemove: (value: string) => void
-}
-
-function MultiSelectField({ label, options, selected, onAdd, onRemove }: MultiSelectFieldProps) {
+  onAdd: (v: string) => void
+  onRemove: (v: string) => void
+}) {
   const available = options.filter((o) => !selected.includes(o))
-
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <FieldLabel>{label}</FieldLabel>
       <select
         value=""
         onChange={(e) => { if (e.target.value) onAdd(e.target.value) }}
-        className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        style={{ ...selectStyle, color: appTheme.textPlaceholder }}
       >
         <option value="">Add {label.toLowerCase()}…</option>
-        {available.map((o) => (
-          <option key={o} value={o}>{o}</option>
-        ))}
+        {available.map((o) => <option key={o} value={o} style={{ color: appTheme.textPrimary }}>{o}</option>)}
       </select>
       {selected.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-0.5">
-          {selected.map((v) => (
-            <TagChip key={v} label={v} onRemove={() => onRemove(v)} />
-          ))}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {selected.map((v) => <TagChip key={v} label={v} onRemove={() => onRemove(v)} />)}
         </div>
       )}
     </div>
   )
 }
 
-// ─── Free-text keyword field ──────────────────────────────────────────────────
-
-interface KeywordFieldProps {
+function KeywordField({ label, keywords, onAdd, onRemove, placeholder }: {
   label: string
   keywords: string[]
   onAdd: (kw: string) => void
   onRemove: (kw: string) => void
   placeholder?: string
-}
-
-function KeywordField({ label, keywords, onAdd, onRemove, placeholder }: KeywordFieldProps) {
+}) {
   const [input, setInput] = useState('')
-
   const commit = () => {
     const trimmed = input.trim()
-    if (trimmed && !keywords.includes(trimmed)) {
-      onAdd(trimmed)
-    }
+    if (trimmed && !keywords.includes(trimmed)) onAdd(trimmed)
     setInput('')
   }
-
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
-      <div className="flex gap-2">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <FieldLabel>{label}</FieldLabel>
+      <div style={{ display: 'flex', gap: '8px' }}>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit() } }}
-          placeholder={placeholder ?? `Type and press Enter…`}
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          placeholder={placeholder ?? 'Type and press Enter…'}
+          style={{ ...inputStyle, flex: 1 }}
         />
         <button
           type="button"
           onClick={commit}
-          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          style={{
+            height: '40px',
+            padding: '0 16px',
+            border: `1px solid ${appTheme.border}`,
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: '#FFFFFF',
+            color: appTheme.textSubtle,
+            fontSize: '13px',
+            cursor: 'pointer',
+            fontFamily: appTheme.font,
+            flexShrink: 0,
+          }}
         >
           Add
         </button>
       </div>
       {keywords.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-0.5">
-          {keywords.map((kw) => (
-            <TagChip key={kw} label={kw} onRemove={() => onRemove(kw)} />
-          ))}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {keywords.map((kw) => <TagChip key={kw} label={kw} onRemove={() => onRemove(kw)} />)}
         </div>
       )}
     </div>
   )
 }
-
-// ─── Step component ───────────────────────────────────────────────────────────
 
 export function KBOptimizationStep({ data, documentId, dispatch, onBack, onNext }: KBOptimizationStepProps) {
   const [apiError, setApiError] = useState<string | null>(null)
@@ -122,8 +130,6 @@ export function KBOptimizationStep({ data, documentId, dispatch, onBack, onNext 
 
   const handleNext = async () => {
     setApiError(null)
-
-    // Build tags array from all groups
     const tags: TagUpsert[] = [
       ...data.sdlc.map((v) => ({ tag_name: v, tag_type: 'sdlc' as const })),
       ...data.domain.map((v) => ({ tag_name: v, tag_type: 'domain' as const })),
@@ -154,84 +160,54 @@ export function KBOptimizationStep({ data, documentId, dispatch, onBack, onNext 
   const persona = toggle('persona')
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="text-base font-semibold text-gray-900">KB Optimization</h2>
-        <p className="mt-0.5 text-sm text-gray-500">Tag this document for better search and discovery.</p>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={sectionLabelStyle}>KB Optimization</div>
 
       {apiError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div style={{ padding: '10px 12px', borderRadius: appTheme.radiusInput, backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: appTheme.danger, fontSize: '13px' }}>
           {apiError}
         </div>
       )}
 
-      {/* Two-column grid for multi-selects */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <MultiSelectField
-          label="SDLC Applicability"
-          options={SDLC_OPTIONS}
-          selected={data.sdlc}
-          onAdd={sdlc.add}
-          onRemove={sdlc.remove}
-        />
-
-        <MultiSelectField
-          label="Domain Tags"
-          options={DOMAIN_OPTIONS}
-          selected={data.domain}
-          onAdd={domain.add}
-          onRemove={domain.remove}
-        />
-
-        <MultiSelectField
-          label="Project Type"
-          options={PROJECT_TYPE_OPTIONS}
-          selected={data.project_type}
-          onAdd={projectType.add}
-          onRemove={projectType.remove}
-        />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+        <MultiSelectField label="SDLC Applicability" options={SDLC_OPTIONS} selected={data.sdlc} onAdd={sdlc.add} onRemove={sdlc.remove} />
+        <MultiSelectField label="Domain Tags" options={DOMAIN_OPTIONS} selected={data.domain} onAdd={domain.add} onRemove={domain.remove} />
+        <MultiSelectField label="Project Type" options={PROJECT_TYPE_OPTIONS} selected={data.project_type} onAdd={projectType.add} onRemove={projectType.remove} />
 
         {/* Priority Weight */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700">Priority Weight</label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <FieldLabel>Priority Weight</FieldLabel>
           <select
             value={data.priority}
             onChange={(e) => dispatch({ type: 'SET_OPTIMIZATION', data: { priority: e.target.value } })}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            style={{ ...selectStyle, color: data.priority ? appTheme.textPrimary : appTheme.textPlaceholder }}
           >
             <option value="">Select priority…</option>
-            {PRIORITY_OPTIONS.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
+            {PRIORITY_OPTIONS.map((p) => <option key={p} value={p} style={{ color: appTheme.textPrimary }}>{p}</option>)}
           </select>
         </div>
       </div>
 
-      {/* Keywords — full width free-text */}
-      <KeywordField
-        label="Keywords"
-        keywords={data.keywords}
-        onAdd={keywords.add}
-        onRemove={keywords.remove}
-        placeholder="Type a keyword and press Enter…"
-      />
-
-      {/* Persona Relevance — full width free-text */}
-      <KeywordField
-        label="Persona Relevance"
-        keywords={data.persona}
-        onAdd={persona.add}
-        onRemove={persona.remove}
-        placeholder="e.g. Developer, PM, Architect…"
-      />
+      <KeywordField label="Keywords" keywords={data.keywords} onAdd={keywords.add} onRemove={keywords.remove} placeholder="Type a keyword and press Enter…" />
+      <KeywordField label="Persona Relevance" keywords={data.persona} onAdd={persona.add} onRemove={persona.remove} placeholder="e.g. Developer, PM, Architect…" />
 
       {/* Footer */}
-      <div className="flex justify-between pt-2">
+      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px' }}>
         <button
           type="button"
           onClick={onBack}
-          className="rounded-md border border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+          style={{
+            height: '40px',
+            padding: '0 22px',
+            border: `1px solid ${appTheme.border}`,
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: '#FFFFFF',
+            color: appTheme.textSubtle,
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            fontFamily: appTheme.font,
+          }}
         >
           Back
         </button>
@@ -239,10 +215,21 @@ export function KBOptimizationStep({ data, documentId, dispatch, onBack, onNext 
           type="button"
           onClick={handleNext}
           disabled={updateTags.isPending}
-          className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          style={{
+            height: '40px',
+            padding: '0 28px',
+            border: 'none',
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: appTheme.primaryBlue,
+            color: '#FFFFFF',
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: updateTags.isPending ? 'not-allowed' : 'pointer',
+            opacity: updateTags.isPending ? 0.7 : 1,
+            fontFamily: appTheme.font,
+          }}
         >
-          {updateTags.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Next
+          {updateTags.isPending ? 'Saving…' : 'Next'}
         </button>
       </div>
     </div>

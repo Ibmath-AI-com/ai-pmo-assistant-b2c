@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { appTheme, inputStyle, sectionLabelStyle } from '@/lib/theme'
 import { useUpdateGovernance, useUpdateDocument } from '@/lib/hooks/useKnowledge'
 import type { GovernanceData, WizardAction } from '../AddDocumentWizard'
 
@@ -13,6 +13,16 @@ interface GovernanceStepProps {
 
 const CLASSIFICATION_LEVELS = ['Public', 'Internal', 'Confidential', 'Restricted'] as const
 const DEPARTMENTS = ['HR', 'Finance', 'Legal', 'IT', 'Operations', 'Product', 'Sales', 'Marketing', 'Other']
+
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  appearance: 'none',
+  backgroundImage:
+    'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'><path d=\'M3 4.5L6 7.5L9 4.5\' stroke=\'%2394A3B8\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' fill=\'none\'/></svg>")',
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 12px center',
+  paddingRight: '32px',
+}
 
 export function GovernanceStep({ data, documentId, dispatch, onBack, onNext }: GovernanceStepProps) {
   const [errors, setErrors] = useState<{ classification_level?: string }>({})
@@ -66,111 +76,104 @@ export function GovernanceStep({ data, documentId, dispatch, onBack, onNext }: G
   const isLoading = updateGovernance.isPending || updateDocument.isPending
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="text-base font-semibold text-gray-900">Governance</h2>
-        <p className="mt-0.5 text-sm text-gray-500">Set classification and ownership for this document.</p>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={sectionLabelStyle}>Governance</div>
 
       {apiError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div style={{ padding: '10px 12px', borderRadius: appTheme.radiusInput, backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: appTheme.danger, fontSize: '13px' }}>
           {apiError}
         </div>
       )}
 
-      {/* Data Classification Level */}
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">
-          Data Classification Level <span className="text-red-500">*</span>
-        </label>
+      {/* Classification Level */}
+      <FieldWrap label="Data Classification Level" required error={errors.classification_level}>
         <select
           value={data.classification_level}
           onChange={(e) => set('classification_level')(e.target.value)}
-          className={`rounded-md border bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-1 ${
-            errors.classification_level
-              ? 'border-red-400 focus:border-red-400 focus:ring-red-400'
-              : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
-          }`}
+          style={{
+            ...selectStyle,
+            color: data.classification_level ? appTheme.textPrimary : appTheme.textPlaceholder,
+            borderColor: errors.classification_level ? appTheme.danger : appTheme.border,
+          }}
         >
           <option value="">Select level…</option>
-          {CLASSIFICATION_LEVELS.map((l) => (
-            <option key={l} value={l}>{l}</option>
-          ))}
+          {CLASSIFICATION_LEVELS.map((l) => <option key={l} value={l} style={{ color: appTheme.textPrimary }}>{l}</option>)}
         </select>
-        {errors.classification_level && (
-          <p className="text-xs text-red-600">{errors.classification_level}</p>
-        )}
-      </div>
+      </FieldWrap>
 
-      {/* Department + Document Owner */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Department</label>
+      {/* Department + Owner */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <FieldWrap label="Department">
           <select
             value={data.department}
             onChange={(e) => set('department')(e.target.value)}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            style={{ ...selectStyle, color: data.department ? appTheme.textPrimary : appTheme.textPlaceholder }}
           >
             <option value="">Select department…</option>
-            {DEPARTMENTS.map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
+            {DEPARTMENTS.map((d) => <option key={d} value={d} style={{ color: appTheme.textPrimary }}>{d}</option>)}
           </select>
-        </div>
+        </FieldWrap>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Document Owner</label>
+        <FieldWrap label="Document Owner">
           <input
             type="text"
             value={data.document_owner}
             onChange={(e) => set('document_owner')(e.target.value)}
             placeholder="e.g. Jane Smith"
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            style={inputStyle}
           />
-        </div>
+        </FieldWrap>
       </div>
 
-      {/* Version Number */}
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Version Number</label>
+      {/* Version */}
+      <FieldWrap label="Version Number">
         <input
           type="text"
           value={data.version_number}
           onChange={(e) => set('version_number')(e.target.value)}
           placeholder="e.g. 1.0"
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:max-w-[200px]"
+          style={{ ...inputStyle, maxWidth: '200px' }}
         />
-      </div>
+      </FieldWrap>
 
-      {/* Effective Date + Review Date */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Effective Date</label>
+      {/* Dates */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <FieldWrap label="Effective Date">
           <input
             type="date"
             value={data.effective_date}
             onChange={(e) => set('effective_date')(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            style={inputStyle}
           />
-        </div>
+        </FieldWrap>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Review Date</label>
+        <FieldWrap label="Review Date">
           <input
             type="date"
             value={data.review_date}
             onChange={(e) => set('review_date')(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            style={inputStyle}
           />
-        </div>
+        </FieldWrap>
       </div>
 
       {/* Footer */}
-      <div className="flex justify-between pt-2">
+      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px' }}>
         <button
           type="button"
           onClick={onBack}
-          className="rounded-md border border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+          style={{
+            height: '40px',
+            padding: '0 22px',
+            border: `1px solid ${appTheme.border}`,
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: '#FFFFFF',
+            color: appTheme.textSubtle,
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            fontFamily: appTheme.font,
+          }}
         >
           Back
         </button>
@@ -178,12 +181,37 @@ export function GovernanceStep({ data, documentId, dispatch, onBack, onNext }: G
           type="button"
           onClick={handleNext}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          style={{
+            height: '40px',
+            padding: '0 28px',
+            border: 'none',
+            borderRadius: appTheme.radiusInput,
+            backgroundColor: appTheme.primaryBlue,
+            color: '#FFFFFF',
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            opacity: isLoading ? 0.7 : 1,
+            fontFamily: appTheme.font,
+          }}
         >
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Next
+          {isLoading ? 'Saving…' : 'Next'}
         </button>
       </div>
+    </div>
+  )
+}
+
+function FieldWrap({ label, required, error, children }: { label?: string; required?: boolean; error?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      {label && (
+        <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: appTheme.textSecondary, marginBottom: '4px', fontFamily: appTheme.font }}>
+          {label}{required && <span style={{ color: appTheme.danger }}> *</span>}
+        </label>
+      )}
+      {children}
+      {error && <div style={{ fontSize: '12px', color: appTheme.danger, marginTop: '4px' }}>{error}</div>}
     </div>
   )
 }
