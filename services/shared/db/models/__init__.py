@@ -1,22 +1,23 @@
 from .base import Base, TimestampMixin, UUIDMixin
-from .organization import Department, Organization
-from .role import Permission, Role, RolePermission, UserAccessOverride, UserRole
-from .session import UserSession
 from .user import User, UserProfile
-from .file import File, FileVersion
+from .session import UserSession
+from .subscription import UserSubscription
+from .file import File, FileVersion, WorkspaceFile
 from .knowledge import (
     DocumentChunk,
+    DocumentEmbedding,
     DocumentIngestionJob,
     KnowledgeCollection,
     KnowledgeDocument,
     KnowledgeDocumentAccess,
     KnowledgeDocumentGovernance,
+    KnowledgeDocumentPersona,
+    KnowledgeDocumentRagSetting,
     KnowledgeDocumentTag,
 )
-from .workspace import Workspace, WorkspaceContentEntity, WorkspaceMember, WorkspaceSetting, WorkspaceTag
+from .workspace import Workspace, WorkspaceContentEntity, WorkspaceSetting, WorkspaceTag
 from .persona import (
     Persona,
-    PersonaAccessRole,
     PersonaAllowedModel,
     PersonaBehaviorSetting,
     PersonaDomainTag,
@@ -24,36 +25,44 @@ from .persona import (
     PersonaModelPolicy,
     PersonaWorkspaceMapping,
 )
-from .skill import Skill, SkillPersonaMapping
+from .skill import Skill, SkillPersonaMapping, SkillExecutionLog
+from .llm import APIIntegration, APIIntegrationUsageLog, LLMModel
+from .connector import ConnectorDocument, ConnectorSource
+from .project import Project, ProjectFile
+from .chat import ChatSession, ChatMessage, ChatAttachment
+from .ai import AIRun, AIRunRetrievalSource, GeneratedOutput, OutputFeedback
+from .prompt import PromptLibrary, PromptPersonaMapping
 
 __all__ = [
     "Base",
     "UUIDMixin",
     "TimestampMixin",
-    "Organization",
-    "Department",
+    # user
     "User",
     "UserProfile",
-    "Role",
-    "Permission",
-    "RolePermission",
-    "UserRole",
-    "UserAccessOverride",
     "UserSession",
+    "UserSubscription",
+    # file
     "File",
     "FileVersion",
+    "WorkspaceFile",
+    # knowledge
     "KnowledgeCollection",
     "KnowledgeDocument",
     "KnowledgeDocumentGovernance",
     "KnowledgeDocumentTag",
     "KnowledgeDocumentAccess",
+    "KnowledgeDocumentPersona",
+    "KnowledgeDocumentRagSetting",
     "DocumentChunk",
+    "DocumentEmbedding",
     "DocumentIngestionJob",
+    # workspace
     "Workspace",
     "WorkspaceSetting",
     "WorkspaceTag",
     "WorkspaceContentEntity",
-    "WorkspaceMember",
+    # persona
     "Persona",
     "PersonaDomainTag",
     "PersonaBehaviorSetting",
@@ -61,7 +70,30 @@ __all__ = [
     "PersonaAllowedModel",
     "PersonaKnowledgeCollection",
     "PersonaWorkspaceMapping",
-    "PersonaAccessRole",
+    # skill
     "Skill",
     "SkillPersonaMapping",
+    "SkillExecutionLog",
+    # llm
+    "LLMModel",
+    "APIIntegration",
+    "APIIntegrationUsageLog",
+    # connector
+    "ConnectorSource",
+    "ConnectorDocument",
+    # project
+    "Project",
+    "ProjectFile",
+    # chat
+    "ChatSession",
+    "ChatMessage",
+    "ChatAttachment",
+    # ai
+    "AIRun",
+    "AIRunRetrievalSource",
+    "GeneratedOutput",
+    "OutputFeedback",
+    # prompt
+    "PromptLibrary",
+    "PromptPersonaMapping",
 ]

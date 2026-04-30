@@ -1,13 +1,41 @@
 import sys
 from pathlib import Path
 
-# Add shared to path before anything else
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
 
 # Polyfill JSONB → JSON for SQLite test engine (must happen before model imports)
 from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
 if not hasattr(SQLiteTypeCompiler, "visit_JSONB"):
     SQLiteTypeCompiler.visit_JSONB = SQLiteTypeCompiler.visit_JSON
+
+# Fix PostgreSQL UUID result processing for SQLite: values may come back as
+# integers (128-bit) or bytes from aiosqlite; handle all variants gracefully.
+import uuid as _uuid_mod
+from sqlalchemy.dialects.postgresql import UUID as _PGUUID
+
+_orig_uuid_rp = _PGUUID.result_processor
+
+def _patched_uuid_rp(self, dialect, coltype):
+    if dialect.name != "sqlite":
+        return _orig_uuid_rp(self, dialect, coltype)
+
+    def process(value):
+        if value is None:
+            return None
+        if isinstance(value, _uuid_mod.UUID):
+            return value
+        if isinstance(value, int):
+            return _uuid_mod.UUID(int=value)
+        if isinstance(value, (bytes, bytearray)):
+            raw = bytes(value)
+            if len(raw) == 16:
+                return _uuid_mod.UUID(bytes=raw)
+            return _uuid_mod.UUID(raw.decode())
+        return _uuid_mod.UUID(str(value))
+
+    return process
+
+_PGUUID.result_processor = _patched_uuid_rp
 
 import asyncio
 import uuid
@@ -16,28 +44,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
-
-# Pre-import the app so all submodules (including publishers) are registered
-import app.main  # noqa: F401
-import app.events.publishers  # noqa: F401
-
-
-# ---------------------------------------------------------------------------
-# Patch auth before importing the app so get_current_user is always mocked
-# ---------------------------------------------------------------------------
-FAKE_USER_ID = uuid.uuid4()
-FAKE_ORG_ID = uuid.uuid4()
-
-
-def _fake_current_user():
-    from auth.dependencies import CurrentUser
-    return CurrentUser(user_id=FAKE_USER_ID, organization_id=FAKE_ORG_ID, tenant_type="b2c")
-
-
-# ---------------------------------------------------------------------------
-# In-memory DB session using SQLite for tests
-# ---------------------------------------------------------------------------
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 from db.models.base import Base
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -45,9 +53,10 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
+FAKE_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+
 
 async def _create_tables():
-    # Import all models so they're registered on Base (including User, Department, etc.)
     import db.models  # noqa: F401
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -66,6 +75,11 @@ async def _get_test_db():
         except Exception:
             await session.rollback()
             raise
+
+
+def _fake_current_user():
+    from auth.dependencies import CurrentUser
+    return CurrentUser(user_id=FAKE_USER_ID)
 
 
 @pytest.fixture(scope="session")
@@ -87,7 +101,7 @@ async def db():
     async with TestSessionLocal() as session:
         try:
             yield session
-            await session.rollback()  # rollback after each test to keep isolation
+            await session.rollback()
         except Exception:
             await session.rollback()
             raise
@@ -95,8 +109,10 @@ async def db():
 
 @pytest_asyncio.fixture
 async def client():
-    """HTTP client with mocked auth and DB."""
-    with patch("app.events.publishers.publish_event", new=AsyncMock()):
+    with (
+        patch("app.events.publishers.publish_event", new=AsyncMock()),
+        patch("app.websocket.notifier.notify_session", new=AsyncMock()),
+    ):
         from app.main import app
         from auth.dependencies import get_current_user
         from db.base import get_db
@@ -108,26 +124,3 @@ async def client():
             yield ac
 
         app.dependency_overrides.clear()
-
-
-@pytest_asyncio.fixture
-async def make_user():
-    """Insert a real User row into the test DB and return their user_id."""
-    from db.models.user import User
-
-    async def _create(username: str | None = None, email: str | None = None) -> uuid.UUID:
-        uid = uuid.uuid4()
-        uname = username or f"user_{uid.hex[:8]}"
-        uemail = email or f"{uname}@test.com"
-        async with TestSessionLocal() as session:
-            user = User(
-                user_id=uid,
-                username=uname,
-                email=uemail,
-                password_hash="test-hash",
-            )
-            session.add(user)
-            await session.commit()
-        return uid
-
-    return _create

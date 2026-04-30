@@ -5,6 +5,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -23,7 +24,6 @@ class Skill(Base):
     __tablename__ = "skill"
 
     skill_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    organization_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)  # external — no FK
     skill_code: Mapped[str] = mapped_column(String(50), nullable=False)
     skill_name: Mapped[str] = mapped_column(String(255), nullable=False)
     skill_type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -65,3 +65,20 @@ class SkillPersonaMapping(Base):
 
     skill: Mapped["Skill"] = relationship("Skill", back_populates="persona_mappings")
     persona: Mapped["Persona"] = relationship("Persona", back_populates="skill_mappings")
+
+
+class SkillExecutionLog(Base):
+    __tablename__ = "skill_execution_log"
+
+    execution_log_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    skill_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("skill.skill_id"), nullable=False, index=True)
+    ai_run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    persona_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    execution_time_ms: Mapped[int | None] = mapped_column(Integer)
+    input_data: Mapped[dict | None] = mapped_column(JSON)
+    output_data: Mapped[dict | None] = mapped_column(JSON)
+    quality_score: Mapped[float | None] = mapped_column(Float)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="success", server_default="success")
+    error_message: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
