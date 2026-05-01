@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { C } from '../../components/template/shared'
 import { TemplateBodyRenderer } from '../../components/template/TemplateBodyRenderer'
 import { useTemplateFamilies, useTemplates, useTemplateLatestVersion } from '../../lib/hooks/useTemplates'
@@ -6,37 +6,25 @@ import { useTemplateFamilies, useTemplates, useTemplateLatestVersion } from '../
 export function TemplatesPage() {
   const { data: families, isLoading: familiesLoading } = useTemplateFamilies()
 
-  const [activeFamilyId, setActiveFamilyId] = useState<string | undefined>()
-  // Remember the last selected template per family
+  // Track explicit user selections; fall back to first available when unset
+  const [selectedFamilyId, setSelectedFamilyId] = useState<string | undefined>()
   const [perFamilyTemplate, setPerFamilyTemplate] = useState<Record<string, string>>({})
 
-  // Default to first family once loaded
-  useEffect(() => {
-    if (families?.length && !activeFamilyId) {
-      setActiveFamilyId(families[0].id)
-    }
-  }, [families, activeFamilyId])
+  const activeFamilyId = selectedFamilyId ?? families?.[0]?.id
 
   const { data: templates, isLoading: templatesLoading } = useTemplates(
     activeFamilyId ? { family_id: activeFamilyId } : undefined
   )
 
-  const activeTemplateId = activeFamilyId ? perFamilyTemplate[activeFamilyId] : undefined
-
-  // Default to first template for each family when templates load
-  useEffect(() => {
-    if (templates?.length && activeFamilyId) {
-      setPerFamilyTemplate(prev => {
-        if (prev[activeFamilyId]) return prev
-        return { ...prev, [activeFamilyId]: templates[0].template_id }
-      })
-    }
-  }, [templates, activeFamilyId])
+  // Active template: explicit selection or first template for this family
+  const activeTemplateId = activeFamilyId
+    ? (perFamilyTemplate[activeFamilyId] ?? templates?.[0]?.template_id)
+    : undefined
 
   const { data: latestVersion, isLoading: versionLoading } = useTemplateLatestVersion(activeTemplateId)
 
   const handleFamilyChange = (id: string) => {
-    setActiveFamilyId(id)
+    setSelectedFamilyId(id)
   }
 
   const handleTemplateChange = (templateId: string) => {

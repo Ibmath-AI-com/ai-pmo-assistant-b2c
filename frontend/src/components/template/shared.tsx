@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const C = {
   navBg: "#1E3A8A", primary: "#1E3A8A", primaryHover: "#1E3A8A", primaryLight: "#EFF6FF",
   accent: "#06B6D4", accentGrad: "linear-gradient(135deg,#06B6D4,#3B82F6)",
