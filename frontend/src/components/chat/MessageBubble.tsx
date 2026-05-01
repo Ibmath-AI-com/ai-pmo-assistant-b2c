@@ -1,5 +1,6 @@
 import type { ChatMessage } from '@/lib/api/chat'
-import { ReportCard, tryParseReport } from './ReportCard'
+import { ReportCard } from './ReportCard'
+import { tryParseReport } from './reportUtils'
 import { BlueAvatar } from './BlueAvatar'
 
 interface Props {

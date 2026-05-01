@@ -37,28 +37,13 @@ export function ChatWindow({ chatSessionId: externalSessionId, className }: Chat
     }).catch(() => {})
   }, [sessionId, loadMessages])
 
-  // Clear typing when streaming starts
-  useEffect(() => {
-    if (streamingContent) setIsTyping(false)
-  }, [streamingContent])
-
-  // Clear typing when AI message arrives
-  useEffect(() => {
-    if (messages.length > 0) {
-      const last = messages[messages.length - 1]
-      if (last.role === 'assistant') setIsTyping(false)
-    }
-  }, [messages])
-
-  // Clear typing on WebSocket error
-  useEffect(() => {
-    if (wsError) setIsTyping(false)
-  }, [wsError])
-
   // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, streamingContent, isTyping])
+
+  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null
+  const showTyping = isTyping && !streamingContent && !wsError && lastMessage?.role !== 'assistant'
 
   const handleSend = useCallback(async (text: string) => {
     let sid = sessionId
@@ -75,7 +60,7 @@ export function ChatWindow({ chatSessionId: externalSessionId, className }: Chat
     setIsTyping(true)
   }, [sessionId, sendMessage])
 
-  const hasMessages = messages.length > 0 || !!streamingContent || isTyping
+  const hasMessages = messages.length > 0 || !!streamingContent || showTyping
 
   return (
     <div
@@ -141,7 +126,7 @@ export function ChatWindow({ chatSessionId: externalSessionId, className }: Chat
         ))}
 
         {streamingContent && <StreamingMessage content={streamingContent} />}
-        {isTyping && !streamingContent && <TypingIndicator />}
+        {showTyping && <TypingIndicator />}
 
         {wsError && (
           <div style={{

@@ -64,7 +64,7 @@ export function ProjectModal({ editProject, onClose }: Props) {
     createProject.isPending || updateProject.isPending || uploadFile.isPending
 
   useEffect(() => {
-    const handler = (_e: MouseEvent) => {
+    const handler = () => {
       if (showDriveMenu) setShowDriveMenu(false)
     }
     if (showDriveMenu) window.addEventListener('click', handler)

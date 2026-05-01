@@ -107,8 +107,8 @@ export function RegisterPage() {
     register(form)
   }
 
-  const focusInput = (_e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {}
-  const blurInput = (_e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {}
+  const focusInput = () => {}
+  const blurInput = () => {}
 
   if (isSuccess) return <RegistrationSuccess email={form.email} />
 
