@@ -24,7 +24,7 @@ FAKE_ORG_ID = uuid.uuid4()
 
 def _fake_current_user():
     from auth.dependencies import CurrentUser
-    return CurrentUser(user_id=FAKE_USER_ID, organization_id=FAKE_ORG_ID, tenant_type="B2C")
+    return CurrentUser(user_id=FAKE_USER_ID)
 
 
 async def _create_tables():

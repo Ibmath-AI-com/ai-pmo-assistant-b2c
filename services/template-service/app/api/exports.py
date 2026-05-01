@@ -4,7 +4,7 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.dependencies import CurrentUser, get_current_user
@@ -19,11 +19,10 @@ def _doc_out(d) -> dict[str, Any]:
     return {
         "generated_document_id": str(d.generated_document_id),
         "template_id": str(d.template_id) if d.template_id else None,
-        "organization_id": str(d.organization_id) if d.organization_id else None,
-        "document_name": d.document_name,
-        "document_format": d.document_format,
-        "document_url": d.document_url,
-        "document_size_bytes": d.document_size_bytes,
+        "user_id": str(d.user_id) if d.user_id else None,
+        "title": d.title,
+        "document_format": d.format,
+        "file_path": d.file_path,
         "status": d.status,
         "created_at": d.created_at.isoformat() if d.created_at else None,
     }
@@ -35,7 +34,7 @@ async def list_generated(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    stmt = select(GeneratedDocument).where(GeneratedDocument.organization_id == user.organization_id)
+    stmt = select(GeneratedDocument).where(GeneratedDocument.user_id == user.user_id)
     if template_id:
         stmt = stmt.where(GeneratedDocument.template_id == template_id)
     stmt = stmt.order_by(GeneratedDocument.created_at.desc())
@@ -51,7 +50,7 @@ async def get_generated(
 ):
     stmt = select(GeneratedDocument).where(
         GeneratedDocument.generated_document_id == doc_id,
-        GeneratedDocument.organization_id == user.organization_id,
+        GeneratedDocument.user_id == user.user_id,
     )
     result = await db.execute(stmt)
     doc = result.scalar_one_or_none()
@@ -68,13 +67,13 @@ async def download_generated(
 ):
     stmt = select(GeneratedDocument).where(
         GeneratedDocument.generated_document_id == doc_id,
-        GeneratedDocument.organization_id == user.organization_id,
+        GeneratedDocument.user_id == user.user_id,
     )
     result = await db.execute(stmt)
     doc = result.scalar_one_or_none()
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Generated document not found")
-    if not doc.document_url:
+    if not doc.file_path:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not available")
-    url = storage_service.get_download_url(doc.document_url)
-    return {"download_url": url, "document_name": doc.document_name, "document_format": doc.document_format}
+    url = storage_service.get_download_url(doc.file_path)
+    return {"download_url": url, "title": doc.title, "document_format": doc.format}

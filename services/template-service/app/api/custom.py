@@ -33,7 +33,7 @@ def _custom_out(c) -> dict[str, Any]:
     return {
         "customize_template_id": str(c.customize_template_id),
         "template_version_id": str(c.template_version_id),
-        "organization_id": str(c.organization_id) if c.organization_id else None,
+        "user_id": str(c.user_id) if c.user_id else None,
         "workspace_id": str(c.workspace_id) if c.workspace_id else None,
         "custom_name": c.custom_name,
         "custom_body": c.custom_body,
@@ -50,7 +50,7 @@ async def create_custom(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    custom = await _svc.create_custom(db, template_id, body.model_dump(), user.user_id, user.organization_id)
+    custom = await _svc.create_custom(db, template_id, body.model_dump(), user.user_id)
     await db.commit()
     await publish_event("template.custom.created", {"template_id": str(template_id), "customize_template_id": str(custom.customize_template_id)})
     return _custom_out(custom)
@@ -62,7 +62,7 @@ async def get_custom(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    custom = await _svc.get_custom(db, template_id, user.organization_id)
+    custom = await _svc.get_custom(db, template_id, user.user_id)
     if not custom:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customize template not found")
     return _custom_out(custom)
@@ -75,6 +75,6 @@ async def update_custom(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    custom = await _svc.update_custom(db, template_id, body.model_dump(exclude_none=True), user.organization_id)
+    custom = await _svc.update_custom(db, template_id, body.model_dump(exclude_none=True), user.user_id)
     await db.commit()
     return _custom_out(custom)
