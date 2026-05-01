@@ -73,6 +73,8 @@ jobs:
           - knowledge-service
           - template-service
           - project-service
+          - chat-service
+          - ai-orchestrator
           - gateway
 
     steps:
