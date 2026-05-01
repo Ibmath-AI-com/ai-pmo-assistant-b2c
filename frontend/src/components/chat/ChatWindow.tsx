@@ -12,23 +12,23 @@ interface ChatWindowProps {
 }
 
 export function ChatWindow({ chatSessionId: externalSessionId, className }: ChatWindowProps) {
-  const [sessionId, setSessionId] = useState<string | null>(externalSessionId ?? null)
+  // localSessionId tracks sessions created within this component (new chat flow)
+  const [localSessionId, setLocalSessionId] = useState<string | null>(null)
+  const sessionId = externalSessionId ?? localSessionId
+
   const [sessionTitle, setSessionTitle] = useState('Chat')
+  // When there's no active session the title is always 'Chat'
+  const displayTitle = sessionId ? sessionTitle : 'Chat'
+
   const [isTyping, setIsTyping] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const { messages, connected, streamingContent, error: wsError, sendMessage, loadMessages } = useChat(sessionId)
 
-  // Sync external session ID changes
-  useEffect(() => {
-    setSessionId(externalSessionId ?? null)
-  }, [externalSessionId])
-
   // Load history when session changes
   useEffect(() => {
     if (!sessionId) {
       loadMessages([])
-      setSessionTitle('Chat')
       return
     }
     getSession(sessionId).then(s => {
@@ -50,7 +50,7 @@ export function ChatWindow({ chatSessionId: externalSessionId, className }: Chat
     if (!sid) {
       const s = await createSession({ title: text.slice(0, 60) })
       sid = s.chat_session_id
-      setSessionId(sid)
+      setLocalSessionId(sid)
       setSessionTitle(s.title ?? 'Chat')
       // Small delay for WebSocket to connect
       setTimeout(() => { sendMessage(text); setIsTyping(true) }, 400)
@@ -90,7 +90,7 @@ export function ChatWindow({ chatSessionId: externalSessionId, className }: Chat
           </svg>
         </div>
         <span style={{ color: '#fff', fontSize: 15, fontWeight: 600, letterSpacing: '0.1px' }}>
-          {sessionTitle}
+          {displayTitle}
         </span>
       </div>
 
