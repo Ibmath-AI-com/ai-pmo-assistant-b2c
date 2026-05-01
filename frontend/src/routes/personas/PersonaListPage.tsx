@@ -336,6 +336,7 @@ function PersonaCard({ persona, menuOpen, onToggleMenu, onView, onEdit, onDownlo
         transition: 'box-shadow 120ms ease',
         opacity: isInactive ? 0.7 : 1,
         position: 'relative',
+        zIndex: menuOpen ? 17 : 'auto',
       }}
     >
       <img

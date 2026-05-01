@@ -10,6 +10,7 @@ import {
 } from '../api/personas'
 
 export function usePersonas(filters?: PersonaListFilters) {
+  console.log("🚀 ~ usePersonas ~ filters:", filters)
   return useQuery({
     queryKey: ['personas', filters],
     queryFn: () => personasApi.list(filters),

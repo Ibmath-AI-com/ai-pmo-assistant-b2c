@@ -1,0 +1,1 @@
+export { TemplateBodyRenderer } from './renderer'
