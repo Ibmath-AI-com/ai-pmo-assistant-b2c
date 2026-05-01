@@ -21,7 +21,7 @@ OTHER_ORG_ID = uuid.uuid4()
 
 def _fake_current_user():
     from auth.dependencies import CurrentUser
-    return CurrentUser(user_id=FAKE_USER_ID, organization_id=FAKE_ORG_ID, tenant_type="b2c")
+    return CurrentUser(user_id=FAKE_USER_ID)
 
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine

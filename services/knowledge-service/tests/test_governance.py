@@ -20,14 +20,12 @@ async def test_set_governance(client):
     doc_id = await _make_document(client)
     resp = await client.put(f"/api/v1/knowledge/documents/{doc_id}/governance", json={
         "classification_level": "Internal",
-        "department": "Engineering",
         "document_owner": "Alice",
         "review_status": "pending",
     })
     assert resp.status_code == 200
     data = resp.json()
     assert data["classification_level"] == "Internal"
-    assert data["department"] == "Engineering"
     assert data["document_owner"] == "Alice"
     assert data["knowledge_document_id"] == doc_id
 
@@ -37,14 +35,12 @@ async def test_governance_appears_in_document_detail(client):
     doc_id = await _make_document(client)
     await client.put(f"/api/v1/knowledge/documents/{doc_id}/governance", json={
         "classification_level": "Confidential",
-        "department": "Legal",
     })
     resp = await client.get(f"/api/v1/knowledge/documents/{doc_id}")
     assert resp.status_code == 200
     gov = resp.json()["governance"]
     assert gov is not None
     assert gov["classification_level"] == "Confidential"
-    assert gov["department"] == "Legal"
 
 
 @pytest.mark.asyncio
