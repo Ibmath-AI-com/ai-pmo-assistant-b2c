@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { C, PT, FooterBtns } from '../shared'
 import type { TemplateBody, TemplateUI, FieldDef, FormState, ListItem, SignatoryItem, WbsItem, PhaseItem, OkrObjective, BscObjective, SwotItem } from './types'
 import { FieldRenderer }     from './FieldRenderer'

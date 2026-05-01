@@ -1,5 +1,4 @@
-import React from 'react'
-import { C, Card, SL, AddBtn, RmBtn } from '../shared'
+﻿import { C, Card, SL, AddBtn, RmBtn } from '../shared'
 import { FieldRenderer, GridRow } from './FieldRenderer'
 import type { Section, FieldValue, ListItem } from './types'
 

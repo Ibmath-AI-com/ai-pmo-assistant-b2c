@@ -1,5 +1,4 @@
-import React from 'react'
-import { C, Card, SL, AddBtn, RmBtn } from '../shared'
+﻿import { C, Card, SL, AddBtn, RmBtn } from '../shared'
 import type { Section, SignatoryItem } from './types'
 
 interface SignatorySectionProps {
@@ -43,7 +42,7 @@ export function SignatorySection({ section, listState, updateList }: SignatorySe
               alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700,
             }}
           >
-            {s.approved ? '✔' : ''}
+            {s.approved ? 'âœ”' : ''}
           </button>
           <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             <input

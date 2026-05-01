@@ -1,5 +1,4 @@
-import React from 'react'
-import { C, Card, SL, RmBtn } from '../shared'
+﻿import { C, Card, SL, RmBtn } from '../shared'
 import type { Section, SwotItem, FormState } from './types'
 
 interface SwotSectionProps {
@@ -49,7 +48,7 @@ export function SwotSection({ section, state, updateListKey }: SwotSectionProps)
                     value={it.description ?? ''}
                     onChange={e => updateItem(i, e.target.value)}
                     rows={2}
-                    placeholder={`Describe this ${q.label.toLowerCase().slice(0, -1)}…`}
+                    placeholder={`Describe this ${q.label.toLowerCase().slice(0, -1)}â€¦`}
                     style={{
                       flex: 1, border: 'none', background: 'transparent', resize: 'none',
                       fontSize: 13, fontFamily: 'inherit', color: C.text, outline: 'none',

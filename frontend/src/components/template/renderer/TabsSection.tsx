@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { C, SL } from '../shared'
 import { ListSection } from './ListSection'
 import type { Section, ListItem, FormState } from './types'

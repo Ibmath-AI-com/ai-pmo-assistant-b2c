@@ -1,5 +1,4 @@
-import React from 'react'
-import { C, Card, SL, Field, Sel, AddBtn, RmBtn } from '../shared'
+﻿import { C, Card, SL, Field, Sel, AddBtn, RmBtn } from '../shared'
 import type { Section, OkrObjective, KeyResult, FieldValue } from './types'
 
 interface OkrSectionProps {
@@ -66,7 +65,7 @@ export function OkrSection({ section, listState, updateList }: OkrSectionProps) 
               <RmBtn onClick={() => rmObj(oi)} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 14, marginBottom: 12 }}>
-              <Field label="Objective" required value={obj.objective} onChange={v => updateObj(oi, 'objective', v)} placeholder="Aspirational goal…" />
+              <Field label="Objective" required value={obj.objective} onChange={v => updateObj(oi, 'objective', v)} placeholder="Aspirational goalâ€¦" />
               <Sel label="BSC Perspective" value={obj.perspective} onChange={v => updateObj(oi, 'perspective', v)} options={['Financial', 'Customer', 'Internal Process', 'Learning & Growth']} />
               <Field label="Owner" value={obj.owner} onChange={v => updateObj(oi, 'owner', v)} placeholder="Name / Team" />
               <Sel label="Status" value={obj.status} onChange={v => updateObj(oi, 'status', v)} options={['On Track', 'At Risk', 'Off Track']} />
@@ -83,7 +82,7 @@ export function OkrSection({ section, listState, updateList }: OkrSectionProps) 
                   <RmBtn onClick={() => rmKr(oi, ki)} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr 1fr 1fr 1fr', gap: 10 }}>
-                  <Field label="Key Result"  value={kr.result}  onChange={v => updateKr(oi, ki, 'result',  String(v))} placeholder="Measurable outcome…" />
+                  <Field label="Key Result"  value={kr.result}  onChange={v => updateKr(oi, ki, 'result',  String(v))} placeholder="Measurable outcomeâ€¦" />
                   <Field label="Target"      value={kr.target}  onChange={v => updateKr(oi, ki, 'target',  String(v))} placeholder="Target" />
                   <Field label="Current"     value={kr.current} onChange={v => updateKr(oi, ki, 'current', String(v))} placeholder="Current" />
                   <Field label="Unit"        value={kr.unit}    onChange={v => updateKr(oi, ki, 'unit',    String(v))} placeholder="%" />

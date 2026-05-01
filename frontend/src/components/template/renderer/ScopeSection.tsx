@@ -1,5 +1,4 @@
-import React from 'react'
-import { C, Card, SL } from '../shared'
+﻿import { C, Card, SL } from '../shared'
 import { FieldRenderer } from './FieldRenderer'
 import type { Section, FieldValue, FormState } from './types'
 
@@ -10,8 +9,8 @@ interface ScopeSectionProps {
 }
 
 const scopeColors = [
-  { color: C.green, bg: C.greenBg, emoji: '✔' },
-  { color: C.red, bg: C.redBg, emoji: '✕' },
+  { color: C.green, bg: C.greenBg, emoji: 'âœ”' },
+  { color: C.red, bg: C.redBg, emoji: 'âœ•' },
 ]
 
 export function ScopeSection({ section, state, update }: ScopeSectionProps) {

@@ -1,5 +1,4 @@
-import React from 'react'
-import { C, Card, SL, Field, RmBtn } from '../shared'
+﻿import { C, Card, SL, Field, RmBtn } from '../shared'
 import type { Section, BscObjective, FormState } from './types'
 
 interface BscMapSectionProps {
@@ -56,7 +55,7 @@ export function BscMapSection({ section, state, updateListKey }: BscMapSectionPr
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                   <Field label="Strategic Objective" required value={o.objective} onChange={v => updateItem(i, 'objective', String(v))} placeholder="Objective name" />
-                  <Field label="Description" value={o.description} onChange={v => updateItem(i, 'description', String(v))} placeholder="What this means…" />
+                  <Field label="Description" value={o.description} onChange={v => updateItem(i, 'description', String(v))} placeholder="What this meansâ€¦" />
                   <Field label="Linked Objectives (IDs)" value={o.cause} onChange={v => updateItem(i, 'cause', String(v))} placeholder="e.g. SO-003, SO-004" />
                 </div>
               </div>

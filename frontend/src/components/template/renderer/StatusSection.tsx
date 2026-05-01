@@ -1,5 +1,4 @@
-import React from 'react'
-import { C, Card, SL, Field, Toggle } from '../shared'
+﻿import { C, Card, SL, Field, Toggle } from '../shared'
 import type { Section, FieldValue, FormState } from './types'
 
 interface StatusSectionProps {

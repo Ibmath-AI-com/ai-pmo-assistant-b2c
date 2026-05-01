@@ -1,5 +1,4 @@
-import React from 'react'
-import { C, Card, SL, AddBtn, RmBtn } from '../shared'
+﻿import { C, Card, SL, AddBtn, RmBtn } from '../shared'
 import { FieldRenderer } from './FieldRenderer'
 import type { Section, PhaseItem, FieldValue } from './types'
 

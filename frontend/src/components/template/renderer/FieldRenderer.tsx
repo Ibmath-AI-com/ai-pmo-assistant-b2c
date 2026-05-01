@@ -1,4 +1,4 @@
-import React from 'react'
+
 import { C, Field, Sel, Toggle } from '../shared'
 import type { FieldDef, FieldValue, FormState } from './types'
 
@@ -17,7 +17,7 @@ export function FieldRenderer({ def, value, onChange }: FieldRendererProps) {
     return (
       <Sel
         label={def.label}
-        value={val}
+        value={String(val)}
         onChange={onChange}
         options={def.options ?? []}
         placeholder={def.placeholder}
@@ -35,7 +35,7 @@ export function FieldRenderer({ def, value, onChange }: FieldRendererProps) {
         </div>
         <Toggle
           options={def.options ?? []}
-          value={val}
+          value={String(val)}
           onChange={onChange}
           small={def.small}
         />
@@ -79,7 +79,7 @@ export function FieldRenderer({ def, value, onChange }: FieldRendererProps) {
   return (
     <Field
       label={def.label}
-      value={val}
+      value={String(val)}
       onChange={onChange}
       type={def.type === 'date' ? 'date' : 'text'}
       multiline={def.type === 'textarea'}
