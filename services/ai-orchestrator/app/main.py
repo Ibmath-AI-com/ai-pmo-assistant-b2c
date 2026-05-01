@@ -1,5 +1,7 @@
+import asyncio
 import sys
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
@@ -12,10 +14,25 @@ from config.settings import get_settings
 
 settings = get_settings()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start the RabbitMQ consumer in the background
+    from app.events.consumers import start_consumer
+    task = asyncio.create_task(start_consumer())
+    yield
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
+
 app = FastAPI(
     title="AI Orchestrator",
     version="1.0.0",
     docs_url="/docs" if settings.app_env != "production" else None,
+    lifespan=lifespan,
 )
 
 if settings.app_env in ("development", "local"):
@@ -56,7 +73,9 @@ async def health():
 from app.api.generate import router as generate_router
 from app.api.prompts import router as prompts_router
 from app.api.feedback import router as feedback_router
+from app.api.internal import router as internal_router
 
 app.include_router(generate_router, prefix="/api/v1/ai", tags=["generate"])
 app.include_router(prompts_router, prefix="/api/v1/prompts", tags=["prompts"])
 app.include_router(feedback_router, prefix="/api/v1/ai/feedback", tags=["feedback"])
+app.include_router(internal_router, prefix="/internal", tags=["internal"])

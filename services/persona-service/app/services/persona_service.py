@@ -10,7 +10,6 @@ from sqlalchemy.orm import selectinload
 
 from db.models.persona import (
     Persona,
-    PersonaAccessRole,
     PersonaAllowedModel,
     PersonaBehaviorSetting,
     PersonaDomainTag,
@@ -18,18 +17,17 @@ from db.models.persona import (
     PersonaModelPolicy,
     PersonaWorkspaceMapping,
 )
-from db.models.user import User
 
 
 class PersonaService:
 
     def _eager(self):
+        """Full eager load — used for detail/edit views."""
         return [
             selectinload(Persona.domain_tags),
             selectinload(Persona.behavior_setting),
             selectinload(Persona.model_policy),
             selectinload(Persona.workspace_mappings),
-            selectinload(Persona.access_roles),
             selectinload(Persona.allowed_models),
             selectinload(Persona.knowledge_collections),
         ]
@@ -37,7 +35,6 @@ class PersonaService:
     async def create(self, db: AsyncSession, data: dict, created_by: uuid.UUID) -> Persona:
         persona = Persona(
             persona_id=uuid.uuid4(),
-            organization_id=data.get("organization_id"),
             user_id=data.get("user_id"),
             persona_code=data["persona_code"],
             persona_name=data["persona_name"],
@@ -56,15 +53,15 @@ class PersonaService:
     async def list(
         self,
         db: AsyncSession,
-        organization_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
         category: str | None = None,
         status: str | None = None,
     ) -> list[Persona]:
-        stmt = select(Persona).options(*self._eager())
+        stmt = select(Persona)
         conditions = []
-        if organization_id:
+        if user_id:
             conditions.append(
-                or_(Persona.organization_id == organization_id, Persona.is_system_persona.is_(True))
+                or_(Persona.user_id == user_id, Persona.is_system_persona.is_(True))
             )
         if category:
             conditions.append(Persona.persona_category == category)
@@ -159,41 +156,6 @@ class PersonaService:
         await db.flush()
         await db.refresh(policy)
         return policy
-
-    async def set_access(self, db: AsyncSession, persona_id: uuid.UUID, user_ids: list[uuid.UUID]) -> list[PersonaAccessRole]:
-        if user_ids:
-            user_result = await db.execute(select(User.user_id).where(User.user_id.in_(user_ids)))
-            existing_user_ids = {row[0] for row in user_result.all()}
-            missing_user_ids = [str(uid) for uid in user_ids if uid not in existing_user_ids]
-            if missing_user_ids:
-                raise HTTPException(
-                    status_code=404,
-                    detail={
-                        "detail": "User(s) not found",
-                        "error_code": "USER_NOT_FOUND",
-                        "user_ids": missing_user_ids,
-                    },
-                )
-
-        # Replace existing access roles
-        existing = await db.execute(
-            select(PersonaAccessRole).where(PersonaAccessRole.persona_id == persona_id)
-        )
-        for row in existing.scalars().all():
-            await db.delete(row)
-        await db.flush()
-
-        roles = []
-        for user_id in user_ids:
-            role = PersonaAccessRole(
-                persona_access_role_id=uuid.uuid4(),
-                persona_id=persona_id,
-                user_id=user_id,
-            )
-            db.add(role)
-            roles.append(role)
-        await db.flush()
-        return roles
 
     async def set_domain_tags(self, db: AsyncSession, persona_id: uuid.UUID, tags: list[dict]) -> list[PersonaDomainTag]:
         # Replace existing tags

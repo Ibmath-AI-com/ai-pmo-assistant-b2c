@@ -6,7 +6,10 @@ import { KnowledgeListPage } from './knowledge-hub/KnowledgeListPage'
 import { AddDocumentWizard } from './knowledge-hub/AddDocumentWizard'
 import { PersonaListPage } from './personas/PersonaListPage'
 import { PersonaWizardPage } from './personas/PersonaWizardPage'
+import { ProjectPage } from './projects/ProjectPage'
 import { AdminDashboard } from './admin/AdminDashboard'
+import { ProfilePage } from './profile/ProfilePage'
+import { TemplatesPage } from './templates/TemplatesPage'
 import { LoginPage } from './auth/LoginPage'
 import { RegisterPage } from './auth/RegisterPage'
 
@@ -27,6 +30,10 @@ export const router = createBrowserRouter([
       { path: 'personas/new', element: <PersonaWizardPage /> },
       { path: 'personas/:id/view', element: <PersonaWizardPage /> },
       { path: 'personas/:id/edit', element: <PersonaWizardPage /> },
+      { path: 'projects/new', element: <ProjectPage /> },
+      { path: 'projects/:id/edit', element: <ProjectPage /> },
+      { path: 'profile', element: <ProfilePage /> },
+      { path: 'templates', element: <TemplatesPage /> },
       { path: 'admin/*', element: <AdminDashboard /> },
     ],
   },

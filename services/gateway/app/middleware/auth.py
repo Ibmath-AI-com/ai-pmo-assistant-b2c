@@ -41,7 +41,5 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
 
         # Forward user context to downstream services via headers
         request.state.user_id = payload["sub"]
-        request.state.org_id = payload.get("org_id", "")
-        request.state.tenant_type = payload.get("tenant_type", "B2C")
 
         return await call_next(request)

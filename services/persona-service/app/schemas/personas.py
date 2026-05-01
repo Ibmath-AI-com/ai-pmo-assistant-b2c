@@ -9,8 +9,6 @@ class PersonaCreate(BaseModel):
     persona_name: str = Field(..., max_length=255)
     persona_category: str = Field(..., pattern="^(PMO|Strategy|Risk|Portfolio|Custom)$")
     short_description: str | None = None
-    organization_id: uuid.UUID | None = None
-    user_id: uuid.UUID | None = None
     avatar_file_id: uuid.UUID | None = None
     is_system_persona: bool = False
 

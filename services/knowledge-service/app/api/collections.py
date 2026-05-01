@@ -34,7 +34,7 @@ class CollectionUpdate(BaseModel):
 
 class CollectionResponse(BaseModel):
     knowledge_collection_id: UUID
-    organization_id: UUID | None
+    user_id: UUID | None
     collection_code: str
     collection_name: str
     description: str | None
@@ -56,14 +56,11 @@ async def create(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     data = body.model_dump()
-    data["organization_id"] = current_user.organization_id
     data["user_id"] = current_user.user_id
     data["created_by"] = current_user.user_id
     data["updated_by"] = current_user.user_id
     collection = await create_collection(db, data)
-    await publish_collection_created(
-        collection.knowledge_collection_id, collection.organization_id
-    )
+    await publish_collection_created(collection.knowledge_collection_id, collection.user_id)
     return collection
 
 
@@ -72,7 +69,7 @@ async def list_all(
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return await list_collections(db, current_user.organization_id)
+    return await list_collections(db, current_user.user_id)
 
 
 @router.get("/{collection_id}", response_model=CollectionDetailResponse)
@@ -81,7 +78,7 @@ async def get_one(
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    collection = await get_collection(db, collection_id, current_user.organization_id)
+    collection = await get_collection(db, collection_id, current_user.user_id)
     doc_count = await get_collection_document_count(db, collection_id)
     response = CollectionDetailResponse.model_validate(collection)
     response.document_count = doc_count
@@ -97,4 +94,4 @@ async def update(
 ):
     data = body.model_dump(exclude_none=True)
     data["updated_by"] = current_user.user_id
-    return await update_collection(db, collection_id, current_user.organization_id, data)
+    return await update_collection(db, collection_id, current_user.user_id, data)

@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { usePersonas, useSetPersonaStatus } from '@/lib/hooks/usePersonas'
 import type { Persona } from '@/lib/api/personas'
 import { appTheme, inputStyle } from '@/lib/theme'
-import { PersonaAvatar } from '@/components/persona/PersonaAvatar'
 import { CapabilityBadges } from '@/components/persona/CapabilityBadges'
 import { ConfirmModal } from '@/components/persona/ConfirmModal'
 import { useToast } from '@/components/persona/useToast'
+import aiSpiderIcon from '@/assets/ai-spider-ico.png'
 
 interface Filters {
   documentTitle: string
@@ -328,7 +328,7 @@ function PersonaCard({ persona, menuOpen, onToggleMenu, onView, onEdit, onDownlo
         display: 'flex',
         alignItems: 'center',
         gap: '16px',
-        padding: '16px 20px',
+        padding: '12px 16px',
         backgroundColor: appTheme.cardBg,
         border: `1px solid ${appTheme.border}`,
         borderRadius: appTheme.radiusCard,
@@ -338,7 +338,17 @@ function PersonaCard({ persona, menuOpen, onToggleMenu, onView, onEdit, onDownlo
         position: 'relative',
       }}
     >
-      <PersonaAvatar />
+      <img
+          src={aiSpiderIcon}
+          alt="AI persona"
+          style={{
+            width: 100,
+            height: 100,
+            borderRadius: 12,
+            objectFit: 'contain',
+            flexShrink: 0,
+          }}
+        />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: '15px', fontWeight: 600, color: appTheme.textPrimary, marginBottom: '4px' }}>
           {persona.persona_name}

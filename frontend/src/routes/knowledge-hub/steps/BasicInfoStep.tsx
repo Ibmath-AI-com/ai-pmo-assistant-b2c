@@ -1,22 +1,14 @@
 import { useState } from 'react'
 import { appTheme, inputStyle, textareaStyle, sectionLabelStyle } from '@/lib/theme'
 import { FileUploadZone } from '@/components/knowledge/FileUploadZone'
-import { IngestionJobStatus } from '@/components/knowledge/IngestionJobStatus'
-import {
-  useCollections,
-  useCreateCollection,
-  useCreateDocument,
-  useUpdateDocument,
-  useUploadFile,
-  useJobs,
-} from '@/lib/hooks/useKnowledge'
+import { useCollections, useCreateCollection } from '@/lib/hooks/useKnowledge'
 import type { BasicInfoData, WizardAction } from '../AddDocumentWizard'
 
 interface BasicInfoStepProps {
   data: BasicInfoData
   dispatch: React.Dispatch<WizardAction>
   onNext: () => void
-  editDocumentId?: string
+  isEditMode?: boolean
 }
 
 const DOCUMENT_TYPES = ['Policy', 'Procedure', 'Template', 'Guide', 'Reference', 'Report', 'Other']
@@ -35,8 +27,6 @@ interface FieldError {
   title?: string
   knowledge_collection_id?: string
 }
-
-// ─── Inline "New Collection" mini-form ───────────────────────────────────────
 
 function NewCollectionForm({
   onCreated,
@@ -145,26 +135,11 @@ function NewCollectionForm({
   )
 }
 
-// ─── Step component ───────────────────────────────────────────────────────────
-
-export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicInfoStepProps) {
-  const isEditMode = !!editDocumentId
-
+export function BasicInfoStep({ data, dispatch, onNext, isEditMode }: BasicInfoStepProps) {
   const [errors, setErrors] = useState<FieldError>({})
-  const [apiError, setApiError] = useState<string | null>(null)
-  const [createdDocId, setCreatedDocId] = useState<string | null>(null)
   const [showNewCollection, setShowNewCollection] = useState(false)
 
   const { data: collections = [] } = useCollections()
-  const createDocument = useCreateDocument()
-  const updateDocument = useUpdateDocument()
-  const uploadFile = useUploadFile()
-
-  const { data: jobs = [] } = useJobs()
-  const trackId = createdDocId ?? (isEditMode ? editDocumentId : null)
-  const ingestionJob = trackId
-    ? jobs.find((j) => j.knowledge_document_id === trackId) ?? null
-    : null
 
   const set = (key: keyof BasicInfoData) => (value: string | File | null) =>
     dispatch({ type: 'SET_BASIC', data: { [key]: value } })
@@ -177,77 +152,13 @@ export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicI
     return Object.keys(errs).length === 0
   }
 
-  const handleNext = async () => {
-    if (!validate()) return
-    setApiError(null)
-
-    try {
-      if (isEditMode) {
-        await updateDocument.mutateAsync({
-          id: editDocumentId,
-          data: {
-            title: data.title.trim(),
-            document_type: data.document_type || undefined,
-            knowledge_collection_id: data.knowledge_collection_id,
-            summary_description: data.summary_description || undefined,
-          },
-        })
-        onNext()
-        return
-      }
-
-      let fileId: string | null = data.fileId
-      if (data.file && !fileId) {
-        const formData = new FormData()
-        formData.append('file', data.file)
-        const uploaded = await uploadFile.mutateAsync(formData)
-        fileId = uploaded.file_id
-        dispatch({ type: 'SET_BASIC', data: { fileId } })
-      }
-
-      const doc = await createDocument.mutateAsync({
-        title: data.title.trim(),
-        document_type: data.document_type || undefined,
-        knowledge_collection_id: data.knowledge_collection_id,
-        summary_description: data.summary_description || undefined,
-        source_code: fileId ?? undefined,
-      })
-
-      dispatch({ type: 'SET_DOCUMENT_ID', id: doc.knowledge_document_id })
-      if (fileId) setCreatedDocId(doc.knowledge_document_id)
-      onNext()
-    } catch (err: unknown) {
-      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
-      const msg = Array.isArray(detail)
-        ? detail.map((e: { msg?: string }) => e.msg ?? String(e)).join('; ')
-        : typeof detail === 'string'
-          ? detail
-          : `Failed to ${isEditMode ? 'update' : 'create'} document. Please try again.`
-      setApiError(msg)
-    }
+  const handleNext = () => {
+    if (validate()) onNext()
   }
-
-  const isLoading = createDocument.isPending || updateDocument.isPending || uploadFile.isPending
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div style={sectionLabelStyle}>Basic Information</div>
-
-      {apiError && (
-        <div
-          style={{
-            padding: '10px 12px',
-            borderRadius: appTheme.radiusInput,
-            backgroundColor: '#FEF2F2',
-            border: '1px solid #FCA5A5',
-            color: appTheme.danger,
-            fontSize: '13px',
-            fontFamily: appTheme.font,
-          }}
-        >
-          {apiError}
-        </div>
-      )}
 
       {/* Document Title */}
       <FieldWrap error={errors.title}>
@@ -275,7 +186,6 @@ export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicI
           {DOCUMENT_TYPES.map((t) => <option key={t} value={t} style={{ color: appTheme.textPrimary }}>{t}</option>)}
         </select>
 
-        {/* Collection selector + inline create */}
         <div>
           <FieldWrap error={errors.knowledge_collection_id}>
             <select
@@ -337,7 +247,7 @@ export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicI
         style={textareaStyle}
       />
 
-      {/* File Upload */}
+      {/* File Upload — create mode only */}
       {!isEditMode && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <label style={{ fontSize: '13px', fontWeight: 500, color: appTheme.textSecondary }}>
@@ -347,19 +257,6 @@ export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicI
             onFileSelect={(file) => dispatch({ type: 'SET_BASIC', data: { file, fileId: null } })}
             selectedFile={data.file}
           />
-          {uploadFile.isPending && (
-            <p style={{ fontSize: '12px', color: appTheme.accentBlue, margin: 0, fontFamily: appTheme.font }}>
-              Uploading file…
-            </p>
-          )}
-          {ingestionJob && (
-            <div style={{ marginTop: '4px' }}>
-              <IngestionJobStatus
-                jobId={ingestionJob.document_ingestion_job_id}
-                documentId={ingestionJob.knowledge_document_id}
-              />
-            </div>
-          )}
         </div>
       )}
 
@@ -368,7 +265,6 @@ export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicI
         <button
           type="button"
           onClick={handleNext}
-          disabled={isLoading}
           style={{
             height: '40px',
             padding: '0 28px',
@@ -378,12 +274,11 @@ export function BasicInfoStep({ data, dispatch, onNext, editDocumentId }: BasicI
             color: '#FFFFFF',
             fontSize: '13px',
             fontWeight: 500,
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            opacity: isLoading ? 0.7 : 1,
+            cursor: 'pointer',
             fontFamily: appTheme.font,
           }}
         >
-          {isLoading ? 'Please wait…' : 'Next'}
+          Next
         </button>
       </div>
     </div>

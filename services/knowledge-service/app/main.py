@@ -27,11 +27,7 @@ if settings.app_env in ("development", "local"):
     from auth.dependencies import CurrentUser, get_current_user
     from auth.jwt import decode_token
 
-    _DEV_USER = CurrentUser(
-        user_id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
-        organization_id=uuid.UUID("2b084efa-2a15-4963-8390-3eb9663bcf77"),  # first real org
-        tenant_type="B2C",
-    )
+    _DEV_USER = CurrentUser(user_id=uuid.UUID("00000000-0000-0000-0000-000000000001"))
     _optional_bearer = HTTPBearer(auto_error=False)
 
     def _dev_get_current_user(
@@ -41,11 +37,7 @@ if settings.app_env in ("development", "local"):
             try:
                 payload = decode_token(credentials.credentials)
                 if payload.get("type") == "access":
-                    return CurrentUser(
-                        user_id=uuid.UUID(payload["sub"]),
-                        organization_id=uuid.UUID(payload["org_id"]),
-                        tenant_type=payload["tenant_type"],
-                    )
+                    return CurrentUser(user_id=uuid.UUID(payload["sub"]))
             except Exception:
                 pass
         return _DEV_USER

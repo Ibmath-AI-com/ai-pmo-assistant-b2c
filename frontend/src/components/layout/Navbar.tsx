@@ -4,11 +4,15 @@ import { Bell, MessageSquare, ChevronDown } from 'lucide-react'
 import { AppLogo } from '@/components/ui/AppLogo'
 import { useAuthStore } from '@/lib/stores/authStore'
 
+function getFirstName(firstName: string | null, username: string): string {
+  return firstName || username
+}
+
 const navLinks = [
   { label: 'Home', to: '/' },
   { label: 'Personas', to: '/personas' },
   { label: 'Knowledge Hub', to: '/knowledge-hub' },
-  { label: 'Admin', to: '/admin' },
+  { label: 'Projects', to: '/projects' },
 ]
 
 function getInitials(firstName: string | null, lastName: string | null, username: string): string {
@@ -49,6 +53,7 @@ export function Navbar() {
 
   const initials = user ? getInitials(user.first_name, user.last_name, user.username) : 'U'
   const displayName = user ? getDisplayName(user.first_name, user.last_name, user.username) : 'User'
+  const firstName = user ? getFirstName(user.first_name, user.username) : 'User'
 
   return (
     <header
@@ -116,7 +121,7 @@ export function Navbar() {
             >
               {initials}
             </div>
-            <span className="text-[14px] font-medium">Welcome, {displayName}</span>
+            <span className="text-[14px] font-medium">Welcome, {firstName}</span>
             <ChevronDown
               size={14}
               style={{ transition: 'transform 150ms', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
@@ -199,6 +204,11 @@ export function Navbar() {
               </div>
 
               {/* Menu items */}
+              <DropdownItem
+                label="My Profile"
+                icon="👤"
+                onClick={() => { setOpen(false); navigate('/profile') }}
+              />
               <DropdownItem label="Upgrade Plan" icon="✦" disabled />
               <DropdownItem label="Settings" icon="⚙" disabled />
               <DropdownItem

@@ -16,14 +16,13 @@ from app.schemas.workspaces import (
     WorkspaceCreate,
     WorkspaceUpdate,
     StatusUpdate,
-    MemberAdd,
     SettingItem,
     SettingsUpdate,
     DefaultPersonaUpdate,
 )
 from app.schemas.errors import (
     RESPONSES_CREATE, RESPONSES_READ, RESPONSES_LIST, RESPONSES_UPDATE,
-    RESPONSES_DELETE, RESPONSES_PATCH, RESPONSES_ADD_MEMBER, ERROR_RESPONSES
+    RESPONSES_DELETE, RESPONSES_PATCH, ERROR_RESPONSES
 )
 
 router = APIRouter()
@@ -31,16 +30,6 @@ _svc = WorkspaceService()
 
 
 # ---------- Response helpers ----------
-
-def _member_out(m) -> dict:
-    return {
-        "workspace_member_id": str(m.workspace_member_id),
-        "user_id": str(m.user_id) if m.user_id else None,
-        "member_role": m.member_role,
-        "joined_at": m.joined_at.isoformat() if m.joined_at else None,
-        "status": m.status,
-    }
-
 
 def _setting_out(s) -> dict:
     return {
@@ -74,7 +63,6 @@ def _workspace_out(w, detail: bool = False) -> dict:
         "updated_at": w.updated_at.isoformat() if w.updated_at else None,
     }
     if detail:
-        out["members"] = [_member_out(m) for m in (w.members or [])]
         out["settings"] = [_setting_out(s) for s in (w.settings or [])]
         out["tags"] = [_tag_out(t) for t in (w.tags or [])]
         out["content_entities"] = [
@@ -153,34 +141,6 @@ async def set_workspace_status(
         raise HTTPException(status_code=404, detail="Workspace not found")
     workspace = await _svc.set_status(db, workspace, body.status, current_user.user_id)
     return {"workspace_id": str(workspace.workspace_id), "status": workspace.status}
-
-
-@router.post("/{workspace_id}/members", status_code=status.HTTP_201_CREATED, responses=RESPONSES_ADD_MEMBER)
-async def add_member(
-    workspace_id: uuid.UUID,
-    body: MemberAdd,
-    current_user: CurrentUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    workspace = await _svc.get(db, workspace_id)
-    if not workspace:
-        raise HTTPException(status_code=404, detail="Workspace not found")
-    member = await _svc.add_member(db, workspace_id, body.user_id, body.member_role)
-    await publish_event("workspace.member.added", {"workspace_id": str(workspace_id), "user_id": str(body.user_id), "role": body.member_role})
-    return _member_out(member)
-
-
-@router.delete("/{workspace_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT, responses={204: {"description": "Member successfully removed"}, 401: ERROR_RESPONSES[401], 404: ERROR_RESPONSES[404]})
-async def remove_member(
-    workspace_id: uuid.UUID,
-    user_id: uuid.UUID,
-    current_user: CurrentUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    removed = await _svc.remove_member(db, workspace_id, user_id)
-    if not removed:
-        raise HTTPException(status_code=404, detail="Member not found")
-    await publish_event("workspace.member.removed", {"workspace_id": str(workspace_id), "user_id": str(user_id)})
 
 
 @router.put("/{workspace_id}/settings", responses=RESPONSES_UPDATE)

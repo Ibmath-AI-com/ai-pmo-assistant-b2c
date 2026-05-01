@@ -60,7 +60,6 @@ class AccessIn(BaseModel):
 class GovernanceOut(BaseModel):
     knowledge_document_governance_id: UUID
     classification_level: str | None
-    department: str | None
     document_owner: str | None
     effective_date: date | None
     review_date: date | None
@@ -151,7 +150,7 @@ async def list_all(
 ):
     return await list_documents(
         db,
-        organization_id=current_user.organization_id,
+        user_id=current_user.user_id,
         collection_id=knowledge_collection_id,
         search=search,
         document_type=document_type,
@@ -169,7 +168,7 @@ async def get_one(
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    document = await get_document(db, document_id, current_user.organization_id)
+    document = await get_document(db, document_id, current_user.user_id)
     chunk_count = await get_document_chunk_count(db, document_id)
     response = DocumentDetailResponse.model_validate(document)
     response.chunk_count = chunk_count
@@ -185,7 +184,7 @@ async def update(
 ):
     data = body.model_dump(exclude_none=True)
     data["updated_by"] = current_user.user_id
-    document = await update_document(db, document_id, current_user.organization_id, data)
+    document = await update_document(db, document_id, current_user.user_id, data)
     await publish_document_updated(document_id)
     return document
 
@@ -198,7 +197,7 @@ async def update_status(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     document = await change_document_status(
-        db, document_id, current_user.organization_id, body.status
+        db, document_id, current_user.user_id, body.status
     )
     if body.status == "deleted":
         await publish_document_deleted(document_id)
@@ -215,7 +214,7 @@ async def replace_access(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     # Verify document exists and belongs to org
-    await get_document(db, document_id, current_user.organization_id)
+    await get_document(db, document_id, current_user.user_id)
 
     # Replace all access entries
     await db.execute(
@@ -243,6 +242,44 @@ async def replace_access(
     return list(result.scalars().all())
 
 
+class SearchRequest(BaseModel):
+    query: str
+    knowledge_collection_id: UUID | None = None
+    top_k: int = 10
+    min_score: float = 0.0
+
+
+class SearchResult(BaseModel):
+    score: float
+    chunk_id: str
+    chunk_no: int
+    chunk_title: str | None
+    chunk_text: str | None
+    document_id: str
+    document_title: str
+    collection_id: str
+
+
+@router.post("/search", response_model=list[SearchResult])
+async def search_documents(
+    body: SearchRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    from app.services import embedding_service, vector_store_service
+
+    query_vector = await embedding_service.embed_query(body.query)
+    if query_vector is None:
+        return []
+    return await vector_store_service.search(
+        db,
+        query_vector=query_vector,
+        collection_id=body.knowledge_collection_id,
+        top_k=body.top_k,
+        min_score=body.min_score,
+    )
+
+
 class JobResponse(BaseModel):
     document_ingestion_job_id: UUID
     knowledge_document_id: UUID
@@ -263,7 +300,7 @@ async def reindex(
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    document = await get_document(db, document_id, current_user.organization_id)
+    document = await get_document(db, document_id, current_user.user_id)
 
     job = await create_ingestion_job(db, document_id, job_type="reindex")
     await db.commit()

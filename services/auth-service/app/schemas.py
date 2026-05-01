@@ -1,4 +1,6 @@
+from datetime import date
 from uuid import UUID
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -8,6 +10,10 @@ class RegisterRequest(BaseModel):
     password: str = Field(..., min_length=6, max_length=128)
     first_name: str | None = Field(None, max_length=100)
     last_name: str | None = Field(None, max_length=100)
+    mobile_number: str | None = Field(None, max_length=20)
+    date_of_birth: date | None = None
+    gender: str | None = Field(None, max_length=30)
+    country: str | None = Field(None, max_length=100)
 
 
 class LoginRequest(BaseModel):

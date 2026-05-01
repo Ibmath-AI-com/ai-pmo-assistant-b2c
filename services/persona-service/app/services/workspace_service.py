@@ -8,8 +8,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from db.models.workspace import Workspace, WorkspaceMember, WorkspaceSetting, WorkspaceTag, WorkspaceContentEntity
-from db.models.user import User
+from db.models.workspace import Workspace, WorkspaceSetting, WorkspaceTag, WorkspaceContentEntity
 
 
 class WorkspaceService:
@@ -30,22 +29,10 @@ class WorkspaceService:
         )
         db.add(workspace)
         await db.flush()
-
-        # Auto-add creator as owner
-        member = WorkspaceMember(
-            workspace_member_id=uuid.uuid4(),
-            workspace_id=workspace.workspace_id,
-            user_id=creator_user_id,
-            member_role="owner",
-            status="active",
-        )
-        db.add(member)
-        await db.flush()
         return workspace
 
     async def list(self, db: AsyncSession, creator_user_id: uuid.UUID | None = None) -> list[Workspace]:
         stmt = select(Workspace).options(
-            selectinload(Workspace.members),
             selectinload(Workspace.settings),
             selectinload(Workspace.tags),
         )
@@ -59,7 +46,6 @@ class WorkspaceService:
             select(Workspace)
             .where(Workspace.workspace_id == workspace_id)
             .options(
-                selectinload(Workspace.members),
                 selectinload(Workspace.settings),
                 selectinload(Workspace.tags),
                 selectinload(Workspace.content_entities),
@@ -84,53 +70,6 @@ class WorkspaceService:
         workspace.updated_at = datetime.now(timezone.utc)
         await db.flush()
         return workspace
-
-    async def add_member(self, db: AsyncSession, workspace_id: uuid.UUID, user_id: uuid.UUID, member_role: str) -> WorkspaceMember:
-        # Verify user exists
-        user_result = await db.execute(select(User).where(User.user_id == user_id))
-        if user_result.scalar_one_or_none() is None:
-            raise HTTPException(
-                status_code=404,
-                detail={"detail": f"User {user_id} not found", "error_code": "USER_NOT_FOUND", "user_id": str(user_id)},
-            )
-
-        # Remove existing membership for this user if any
-        existing = await db.execute(
-            select(WorkspaceMember).where(
-                WorkspaceMember.workspace_id == workspace_id,
-                WorkspaceMember.user_id == user_id,
-            )
-        )
-        existing_member = existing.scalar_one_or_none()
-        if existing_member:
-            existing_member.member_role = member_role
-            await db.flush()
-            return existing_member
-
-        member = WorkspaceMember(
-            workspace_member_id=uuid.uuid4(),
-            workspace_id=workspace_id,
-            user_id=user_id,
-            member_role=member_role,
-            status="active",
-        )
-        db.add(member)
-        await db.flush()
-        return member
-
-    async def remove_member(self, db: AsyncSession, workspace_id: uuid.UUID, user_id: uuid.UUID) -> bool:
-        result = await db.execute(
-            select(WorkspaceMember).where(
-                WorkspaceMember.workspace_id == workspace_id,
-                WorkspaceMember.user_id == user_id,
-            )
-        )
-        member = result.scalar_one_or_none()
-        if not member:
-            return False
-        await db.delete(member)
-        await db.flush()
-        return True
 
     async def upsert_settings(self, db: AsyncSession, workspace_id: uuid.UUID, settings: list[dict], updated_by: uuid.UUID) -> list[WorkspaceSetting]:
         result_rows = []

@@ -5,11 +5,14 @@ from datetime import datetime, timezone
 
 async def publish_event(event_type: str, payload: dict) -> None:
     try:
+        import logging
         from config.settings import get_settings
         import aio_pika
 
+        for _log in ("aio_pika", "aiormq", "aiormq.connection"):
+            logging.getLogger(_log).setLevel(logging.CRITICAL)
         settings = get_settings()
-        connection = await aio_pika.connect_robust(settings.rabbitmq_url)
+        connection = await aio_pika.connect(settings.rabbitmq_url, timeout=3)
         async with connection:
             channel = await connection.channel()
             exchange = await channel.declare_exchange("ai_pmo_events", aio_pika.ExchangeType.TOPIC, durable=True)
@@ -25,4 +28,4 @@ async def publish_event(event_type: str, payload: dict) -> None:
                 routing_key=event_type,
             )
     except Exception:
-        pass
+        pass  # RabbitMQ unavailable — fire-and-forget, not critical

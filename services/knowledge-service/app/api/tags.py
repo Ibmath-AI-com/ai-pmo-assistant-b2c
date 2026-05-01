@@ -36,7 +36,7 @@ async def replace_tags(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     # Verify document exists and belongs to org
-    await get_document(db, document_id, current_user.organization_id)
+    await get_document(db, document_id, current_user.user_id)
 
     # Delete all existing tags for this document
     await db.execute(

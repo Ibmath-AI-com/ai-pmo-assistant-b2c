@@ -1,5 +1,5 @@
 from .base import Base, TimestampMixin, UUIDMixin
-from .user import User, UserProfile
+from .user import User, UserProfile, UserPaymentMethod
 from .session import UserSession
 from .subscription import UserSubscription
 from .file import File, FileVersion, WorkspaceFile
@@ -32,6 +32,7 @@ from .project import Project, ProjectFile
 from .chat import ChatSession, ChatMessage, ChatAttachment
 from .ai import AIRun, AIRunRetrievalSource, GeneratedOutput, OutputFeedback
 from .prompt import PromptLibrary, PromptPersonaMapping
+from .template import Template, TemplateFamily, TemplateVersion, TemplateFileMapping, CustomizeTemplate, GeneratedDocument
 
 __all__ = [
     "Base",
@@ -40,6 +41,7 @@ __all__ = [
     # user
     "User",
     "UserProfile",
+    "UserPaymentMethod",
     "UserSession",
     "UserSubscription",
     # file
@@ -96,4 +98,11 @@ __all__ = [
     # prompt
     "PromptLibrary",
     "PromptPersonaMapping",
+    # template
+    "TemplateFamily",
+    "Template",
+    "TemplateVersion",
+    "TemplateFileMapping",
+    "CustomizeTemplate",
+    "GeneratedDocument",
 ]

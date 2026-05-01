@@ -36,22 +36,6 @@ from app.api.auth import router as auth_router
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
 
 from app.api.users import router as users_router
+
 app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 
-from app.api.organizations import router as orgs_router
-from app.api.departments import router as depts_router
-app.include_router(orgs_router, prefix="/api/v1/organizations", tags=["organizations"])
-app.include_router(depts_router, prefix="/api/v1/departments", tags=["departments"])
-
-from app.api.roles import router as roles_router
-app.include_router(roles_router, prefix="/api/v1/roles", tags=["roles"])
-
-# Uncomment as built:
-# from app.api.users import router as users_router
-# from app.api.organizations import router as orgs_router
-# from app.api.departments import router as depts_router
-# from app.api.roles import router as roles_router
-# app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
-# app.include_router(orgs_router, prefix="/api/v1/organizations", tags=["organizations"])
-# app.include_router(depts_router, prefix="/api/v1/departments", tags=["departments"])
-# app.include_router(roles_router, prefix="/api/v1/roles", tags=["roles"])

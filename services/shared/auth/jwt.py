@@ -8,12 +8,10 @@ from config.settings import get_settings
 settings = get_settings()
 
 
-def create_access_token(user_id: UUID, org_id: UUID, tenant_type: str) -> str:
+def create_access_token(user_id: UUID) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_access_token_expire_minutes)
     payload = {
         "sub": str(user_id),
-        "org_id": str(org_id),
-        "tenant_type": tenant_type,
         "type": "access",
         "exp": expire,
     }

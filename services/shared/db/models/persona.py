@@ -24,8 +24,7 @@ class Persona(Base):
     __tablename__ = "persona"
 
     persona_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    organization_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)  # external — no FK
-    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)  # external — no FK
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)  # owner user
     persona_code: Mapped[str] = mapped_column(String(50), nullable=False)
     persona_name: Mapped[str] = mapped_column(String(255), nullable=False)
     persona_category: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -50,7 +49,6 @@ class Persona(Base):
     behavior_setting: Mapped["PersonaBehaviorSetting | None"] = relationship("PersonaBehaviorSetting", back_populates="persona", uselist=False, cascade="all, delete-orphan")
     model_policy: Mapped["PersonaModelPolicy | None"] = relationship("PersonaModelPolicy", back_populates="persona", uselist=False, cascade="all, delete-orphan")
     workspace_mappings: Mapped[list["PersonaWorkspaceMapping"]] = relationship("PersonaWorkspaceMapping", back_populates="persona", cascade="all, delete-orphan")
-    access_roles: Mapped[list["PersonaAccessRole"]] = relationship("PersonaAccessRole", back_populates="persona", cascade="all, delete-orphan")
     allowed_models: Mapped[list["PersonaAllowedModel"]] = relationship("PersonaAllowedModel", back_populates="persona", cascade="all, delete-orphan")
     knowledge_collections: Mapped[list["PersonaKnowledgeCollection"]] = relationship("PersonaKnowledgeCollection", back_populates="persona", cascade="all, delete-orphan")
     skill_mappings: Mapped[list["SkillPersonaMapping"]] = relationship("SkillPersonaMapping", back_populates="persona", cascade="all, delete-orphan")
@@ -137,16 +135,6 @@ class PersonaWorkspaceMapping(Base):
 
     persona: Mapped["Persona"] = relationship("Persona", back_populates="workspace_mappings")
     workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="persona_mappings")
-
-
-class PersonaAccessRole(Base):
-    __tablename__ = "persona_access_role"
-
-    persona_access_role_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    persona_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("persona.persona_id"), nullable=False)
-    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)  # external — no FK
-
-    persona: Mapped["Persona"] = relationship("Persona", back_populates="access_roles")
 
 
 class PersonaAllowedModel(Base):

@@ -1,6 +1,6 @@
 """
 RabbitMQ consumer for ai-orchestrator.
-Consumes chat.message.created → runs generation pipeline → publishes ai.run.completed.
+Optional — chat works via direct HTTP even when RabbitMQ is unavailable.
 """
 from __future__ import annotations
 
@@ -25,11 +25,26 @@ async def start_consumer():
         settings = get_settings()
         pipeline = GenerationPipeline()
 
-        connection = await aio_pika.connect_robust(settings.rabbitmq_url)
+        # Try to connect once — fail fast if RabbitMQ is unavailable
+        # Silence aio_pika's internal logger so it doesn't print the connection error
+        import logging
+        for _log in ("aio_pika", "aiormq", "aiormq.connection"):
+            logging.getLogger(_log).setLevel(logging.CRITICAL)
+        try:
+            connection = await asyncio.wait_for(
+                aio_pika.connect(settings.rabbitmq_url),
+                timeout=5.0,
+            )
+        except (OSError, asyncio.TimeoutError, Exception):
+            print("[ai-orchestrator] RabbitMQ unavailable — event consumer disabled. Chat works via direct HTTP.")
+            return
+
         channel = await connection.channel()
         exchange = await channel.declare_exchange("ai_pmo_events", aio_pika.ExchangeType.TOPIC, durable=True)
         queue = await channel.declare_queue("ai_orchestrator_queue", durable=True)
         await queue.bind(exchange, routing_key="chat.message.created")
+
+        print("[ai-orchestrator] RabbitMQ consumer started.")
 
         async with queue.iterator() as q:
             async for message in q:
@@ -68,6 +83,8 @@ async def start_consumer():
                             "response": response,
                         })
                     except Exception as e:
-                        print(f"Consumer error: {e}")
+                        print(f"[ai-orchestrator] Consumer error: {e}")
+    except asyncio.CancelledError:
+        pass
     except Exception as e:
-        print(f"Consumer startup error: {e}")
+        print(f"[ai-orchestrator] Consumer startup error: {e}")

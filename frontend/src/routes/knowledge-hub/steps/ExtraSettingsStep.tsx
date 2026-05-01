@@ -1,15 +1,14 @@
-import { useState } from 'react'
 import { appTheme, inputStyle, sectionLabelStyle } from '@/lib/theme'
-import { useUpdateGovernance, useUpdateAccess, useLLMModels, useKnowledgeUsers } from '@/lib/hooks/useKnowledge'
+import { useLLMModels, useKnowledgeUsers } from '@/lib/hooks/useKnowledge'
 import type { ExtrasData, WizardAction } from '../AddDocumentWizard'
 
 interface ExtraSettingsStepProps {
   data: ExtrasData
-  documentId: string
-  classificationLevel: string
   dispatch: React.Dispatch<WizardAction>
   onBack: () => void
   onSubmit: () => void
+  isSubmitting: boolean
+  submitError: string | null
 }
 
 const selectStyle: React.CSSProperties = {
@@ -92,59 +91,20 @@ function ToggleRow({ label, description, checked, onChange, children }: {
   )
 }
 
-export function ExtraSettingsStep({ data, documentId, classificationLevel, dispatch, onBack, onSubmit }: ExtraSettingsStepProps) {
-  const [apiError, setApiError] = useState<string | null>(null)
-
-  const updateGovernance = useUpdateGovernance()
-  const updateAccess = useUpdateAccess()
+export function ExtraSettingsStep({ data, dispatch, onBack, onSubmit, isSubmitting, submitError }: ExtraSettingsStepProps) {
   const { data: llmModels = [] } = useLLMModels()
   const { data: users = [] } = useKnowledgeUsers()
 
   const set = (key: keyof ExtrasData) => (value: string | boolean) =>
     dispatch({ type: 'SET_EXTRAS', data: { [key]: value } })
 
-  const isLoading = updateGovernance.isPending || updateAccess.isPending
-
-  const handleSubmit = async () => {
-    setApiError(null)
-
-    try {
-      await updateGovernance.mutateAsync({
-        id: documentId,
-        data: {
-          classification_level: classificationLevel as 'Public' | 'Internal' | 'Confidential' | 'Restricted',
-          allow_external_llm_usage: data.allowLLM,
-          llm_model_id: data.allowLLM && data.llmModelId ? data.llmModelId : undefined,
-          expiry_date: data.setExpiry && data.expiryDate ? data.expiryDate : undefined,
-        },
-      })
-
-      if (data.specificAccess && data.specificAccessUserId) {
-        await updateAccess.mutateAsync({
-          id: documentId,
-          entries: [{ user_id: data.specificAccessUserId, access_type: 'read' }],
-        })
-      }
-
-      onSubmit()
-    } catch (err: unknown) {
-      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
-      const msg = Array.isArray(detail)
-        ? detail.map((e: { msg?: string }) => e.msg ?? String(e)).join('; ')
-        : typeof detail === 'string'
-          ? detail
-          : 'Failed to save settings. Please try again.'
-      setApiError(msg)
-    }
-  }
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div style={sectionLabelStyle}>Extra Settings</div>
 
-      {apiError && (
+      {submitError && (
         <div style={{ padding: '10px 12px', borderRadius: appTheme.radiusInput, backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: appTheme.danger, fontSize: '13px' }}>
-          {apiError}
+          {submitError}
         </div>
       )}
 
@@ -207,6 +167,7 @@ export function ExtraSettingsStep({ data, documentId, classificationLevel, dispa
         <button
           type="button"
           onClick={onBack}
+          disabled={isSubmitting}
           style={{
             height: '40px',
             padding: '0 22px',
@@ -216,7 +177,8 @@ export function ExtraSettingsStep({ data, documentId, classificationLevel, dispa
             color: appTheme.textSubtle,
             fontSize: '13px',
             fontWeight: 500,
-            cursor: 'pointer',
+            cursor: isSubmitting ? 'not-allowed' : 'pointer',
+            opacity: isSubmitting ? 0.5 : 1,
             fontFamily: appTheme.font,
           }}
         >
@@ -224,8 +186,8 @@ export function ExtraSettingsStep({ data, documentId, classificationLevel, dispa
         </button>
         <button
           type="button"
-          onClick={handleSubmit}
-          disabled={isLoading}
+          onClick={onSubmit}
+          disabled={isSubmitting}
           style={{
             height: '40px',
             padding: '0 28px',
@@ -235,12 +197,12 @@ export function ExtraSettingsStep({ data, documentId, classificationLevel, dispa
             color: '#FFFFFF',
             fontSize: '13px',
             fontWeight: 500,
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            opacity: isLoading ? 0.7 : 1,
+            cursor: isSubmitting ? 'not-allowed' : 'pointer',
+            opacity: isSubmitting ? 0.7 : 1,
             fontFamily: appTheme.font,
           }}
         >
-          {isLoading ? 'Submitting…' : 'Submit'}
+          {isSubmitting ? 'Saving…' : 'Submit'}
         </button>
       </div>
     </div>

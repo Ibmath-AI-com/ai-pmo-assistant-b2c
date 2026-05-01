@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from typing import AsyncGenerator
 
 from openai import AsyncOpenAI
@@ -12,7 +11,10 @@ class OpenAIProvider(BaseLLMProvider):
     DEFAULT_MODEL = "gpt-4o-mini"
 
     def __init__(self, api_key: str | None = None):
-        self._client = AsyncOpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
+        if api_key is None:
+            from config.settings import get_settings
+            api_key = get_settings().openai_api_key or None
+        self._client = AsyncOpenAI(api_key=api_key)
 
     async def generate(
         self,

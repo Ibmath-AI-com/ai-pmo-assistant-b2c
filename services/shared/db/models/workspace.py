@@ -47,7 +47,6 @@ class Workspace(Base):
     settings: Mapped[list["WorkspaceSetting"]] = relationship("WorkspaceSetting", back_populates="workspace", cascade="all, delete-orphan")
     tags: Mapped[list["WorkspaceTag"]] = relationship("WorkspaceTag", back_populates="workspace", cascade="all, delete-orphan")
     content_entities: Mapped[list["WorkspaceContentEntity"]] = relationship("WorkspaceContentEntity", back_populates="workspace", cascade="all, delete-orphan")
-    members: Mapped[list["WorkspaceMember"]] = relationship("WorkspaceMember", back_populates="workspace", cascade="all, delete-orphan")
     persona_mappings: Mapped[list["PersonaWorkspaceMapping"]] = relationship("PersonaWorkspaceMapping", back_populates="workspace")
 
 
@@ -93,21 +92,5 @@ class WorkspaceContentEntity(Base):
 
     workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="content_entities")
 
-
-class WorkspaceMember(Base):
-    __tablename__ = "workspace_member"
-
-    workspace_member_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    workspace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("workspace.workspace_id"), nullable=False)
-    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)  # external — no FK
-    member_role: Mapped[str] = mapped_column(String(20), nullable=False, default="member")
-    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active", server_default="active")
-
-    __table_args__ = (
-        CheckConstraint("member_role IN ('owner', 'admin', 'member', 'viewer')", name="ck_workspace_member_role"),
-    )
-
-    workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="members")
 
 

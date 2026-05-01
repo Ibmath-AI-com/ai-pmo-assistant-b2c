@@ -61,7 +61,6 @@ def _persona_out(p, detail: bool = False) -> dict:
         "persona_name": p.persona_name,
         "persona_category": p.persona_category,
         "short_description": p.short_description,
-        "organization_id": str(p.organization_id) if p.organization_id else None,
         "user_id": str(p.user_id) if p.user_id else None,
         "avatar_file_id": str(p.avatar_file_id) if p.avatar_file_id else None,
         "is_system_persona": p.is_system_persona,
@@ -75,10 +74,6 @@ def _persona_out(p, detail: bool = False) -> dict:
         out["domain_tags"] = [
             {"persona_domain_tag_id": str(t.persona_domain_tag_id), "tag_name": t.tag_name, "tag_type": t.tag_type}
             for t in (p.domain_tags or [])
-        ]
-        out["access_roles"] = [
-            {"persona_access_role_id": str(r.persona_access_role_id), "user_id": str(r.user_id) if r.user_id else None}
-            for r in (p.access_roles or [])
         ]
         out["workspace_mappings"] = [
             {
@@ -102,23 +97,20 @@ async def create_persona(
     db: AsyncSession = Depends(get_db),
 ):
     data = body.model_dump()
-    if not data.get("organization_id"):
-        data["organization_id"] = current_user.organization_id
+    data["user_id"] = current_user.user_id
     persona = await _svc.create(db, data, current_user.user_id)
-    await publish_event("persona.created", {"persona_id": str(persona.persona_id), "organization_id": str(persona.organization_id) if persona.organization_id else None})
+    await publish_event("persona.created", {"persona_id": str(persona.persona_id), "user_id": str(persona.user_id) if persona.user_id else None})
     return _persona_out(persona)
 
 
 @router.get("", responses=RESPONSES_LIST)
 async def list_personas(
-    organization_id: uuid.UUID | None = None,
     category: str | None = None,
     status: str | None = None,
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    org_id = organization_id or current_user.organization_id
-    personas = await _svc.list(db, organization_id=org_id, category=category, status=status)
+    personas = await _svc.list(db, user_id=current_user.user_id, category=category, status=status)
     return [_persona_out(p) for p in personas]
 
 

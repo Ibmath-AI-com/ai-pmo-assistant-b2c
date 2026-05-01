@@ -11,8 +11,6 @@ bearer_scheme = HTTPBearer()
 
 class CurrentUser(BaseModel):
     user_id: UUID
-    organization_id: UUID
-    tenant_type: str
 
 
 def get_current_user(
@@ -35,8 +33,4 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    return CurrentUser(
-        user_id=UUID(payload["sub"]),
-        organization_id=UUID(payload["org_id"]),
-        tenant_type=payload["tenant_type"],
-    )
+    return CurrentUser(user_id=UUID(payload["sub"]))

@@ -1,13 +1,10 @@
 import { useState } from 'react'
 import { appTheme, inputStyle, sectionLabelStyle } from '@/lib/theme'
 import { TagChip } from '@/components/knowledge/TagChip'
-import { useUpdateTags } from '@/lib/hooks/useKnowledge'
-import type { TagUpsert } from '@/lib/api/knowledge'
 import type { OptimizationData, WizardAction } from '../AddDocumentWizard'
 
 interface KBOptimizationStepProps {
   data: OptimizationData
-  documentId: string
   dispatch: React.Dispatch<WizardAction>
   onBack: () => void
   onNext: () => void
@@ -117,41 +114,13 @@ function KeywordField({ label, keywords, onAdd, onRemove, placeholder }: {
   )
 }
 
-export function KBOptimizationStep({ data, documentId, dispatch, onBack, onNext }: KBOptimizationStepProps) {
-  const [apiError, setApiError] = useState<string | null>(null)
-  const updateTags = useUpdateTags()
-
+export function KBOptimizationStep({ data, dispatch, onBack, onNext }: KBOptimizationStepProps) {
   const toggle = (key: 'sdlc' | 'domain' | 'project_type' | 'keywords' | 'persona') => ({
     add: (value: string) =>
       dispatch({ type: 'SET_OPTIMIZATION', data: { [key]: [...data[key], value] } }),
     remove: (value: string) =>
       dispatch({ type: 'SET_OPTIMIZATION', data: { [key]: data[key].filter((v) => v !== value) } }),
   })
-
-  const handleNext = async () => {
-    setApiError(null)
-    const tags: TagUpsert[] = [
-      ...data.sdlc.map((v) => ({ tag_name: v, tag_type: 'sdlc' as const })),
-      ...data.domain.map((v) => ({ tag_name: v, tag_type: 'domain' as const })),
-      ...data.project_type.map((v) => ({ tag_name: v, tag_type: 'project_type' as const })),
-      ...data.keywords.map((v) => ({ tag_name: v, tag_type: 'keyword' as const })),
-      ...data.persona.map((v) => ({ tag_name: `persona:${v}`, tag_type: 'keyword' as const })),
-      ...(data.priority ? [{ tag_name: `priority:${data.priority}`, tag_type: 'keyword' as const }] : []),
-    ]
-
-    try {
-      await updateTags.mutateAsync({ id: documentId, tags })
-      onNext()
-    } catch (err: unknown) {
-      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
-      const msg = Array.isArray(detail)
-        ? detail.map((e: { msg?: string }) => e.msg ?? String(e)).join('; ')
-        : typeof detail === 'string'
-          ? detail
-          : 'Failed to save tags. Please try again.'
-      setApiError(msg)
-    }
-  }
 
   const sdlc = toggle('sdlc')
   const domain = toggle('domain')
@@ -162,12 +131,6 @@ export function KBOptimizationStep({ data, documentId, dispatch, onBack, onNext 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div style={sectionLabelStyle}>KB Optimization</div>
-
-      {apiError && (
-        <div style={{ padding: '10px 12px', borderRadius: appTheme.radiusInput, backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: appTheme.danger, fontSize: '13px' }}>
-          {apiError}
-        </div>
-      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
         <MultiSelectField label="SDLC Applicability" options={SDLC_OPTIONS} selected={data.sdlc} onAdd={sdlc.add} onRemove={sdlc.remove} />
@@ -213,8 +176,7 @@ export function KBOptimizationStep({ data, documentId, dispatch, onBack, onNext 
         </button>
         <button
           type="button"
-          onClick={handleNext}
-          disabled={updateTags.isPending}
+          onClick={onNext}
           style={{
             height: '40px',
             padding: '0 28px',
@@ -224,12 +186,11 @@ export function KBOptimizationStep({ data, documentId, dispatch, onBack, onNext 
             color: '#FFFFFF',
             fontSize: '13px',
             fontWeight: 500,
-            cursor: updateTags.isPending ? 'not-allowed' : 'pointer',
-            opacity: updateTags.isPending ? 0.7 : 1,
+            cursor: 'pointer',
             fontFamily: appTheme.font,
           }}
         >
-          {updateTags.isPending ? 'Saving…' : 'Next'}
+          Next
         </button>
       </div>
     </div>

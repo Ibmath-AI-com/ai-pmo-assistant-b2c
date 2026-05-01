@@ -13,6 +13,7 @@ export function usePersonas(filters?: PersonaListFilters) {
   return useQuery({
     queryKey: ['personas', filters],
     queryFn: () => personasApi.list(filters),
+    staleTime: 1000 * 60 * 2, // 2 min — show cached list instantly on re-navigation
   })
 }
 
@@ -21,6 +22,7 @@ export function usePersona(id: string | undefined) {
     queryKey: ['persona', id],
     queryFn: () => personasApi.get(id!),
     enabled: !!id,
+    staleTime: 1000 * 60 * 2,
   })
 }
 

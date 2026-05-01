@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from typing import AsyncGenerator
 
 import anthropic
@@ -12,7 +11,10 @@ class AnthropicProvider(BaseLLMProvider):
     DEFAULT_MODEL = "claude-sonnet-4-6"
 
     def __init__(self, api_key: str | None = None):
-        self._client = anthropic.AsyncAnthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
+        if api_key is None:
+            from config.settings import get_settings
+            api_key = get_settings().anthropic_api_key or None
+        self._client = anthropic.AsyncAnthropic(api_key=api_key)
 
     def _split_messages(self, messages: list[dict]) -> tuple[str | None, list[dict]]:
         system = None
