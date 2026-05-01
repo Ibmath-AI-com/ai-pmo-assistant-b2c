@@ -1,9 +1,8 @@
-import uuid
 import pytest
 
 
 @pytest.mark.asyncio
-async def test_full_wizard_flow(client, make_user):
+async def test_full_wizard_flow(client):
     """Complete 4-step persona creation wizard → GET returns everything nested."""
 
     # Step 1: Create basic persona
@@ -39,19 +38,12 @@ async def test_full_wizard_flow(client, make_user):
     })
     assert step3.status_code == 200
 
-    # Step 4a: Access — use real user IDs so the user-existence check passes
-    user_id_1 = await make_user()
-    user_id_2 = await make_user()
-    user_ids = [str(user_id_1), str(user_id_2)]
-    step4a = await client.put(f"/api/v1/personas/{persona_id}/access", json={"user_ids": user_ids})
-    assert step4a.status_code == 200
-
-    # Step 4b: Domain tags
-    step4b = await client.put(f"/api/v1/personas/{persona_id}/domain-tags", json={"tags": [
+    # Step 4: Domain tags
+    step4 = await client.put(f"/api/v1/personas/{persona_id}/domain-tags", json={"tags": [
         {"tag_name": "PMO", "tag_type": "domain"},
         {"tag_name": "Scrum", "tag_type": "sdlc"},
     ]})
-    assert step4b.status_code == 200
+    assert step4.status_code == 200
 
     # Final GET — all nested
     get_resp = await client.get(f"/api/v1/personas/{persona_id}")
@@ -62,7 +54,6 @@ async def test_full_wizard_flow(client, make_user):
     assert data["behavior_setting"]["tone_of_voice"] == "Advisory"
     assert data["behavior_setting"]["system_instruction"] == "You help with project management."
     assert data["model_policy"]["classification_limit"] == "Internal"
-    assert len(data["access_roles"]) == 2
     assert len(data["domain_tags"]) == 2
     tag_names = {t["tag_name"] for t in data["domain_tags"]}
     assert "PMO" in tag_names

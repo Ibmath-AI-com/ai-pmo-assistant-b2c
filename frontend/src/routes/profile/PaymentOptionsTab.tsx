@@ -1,36 +1,37 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { PaymentCard } from './components/PaymentCard'
 import { AddCardModal } from './components/AddCardModal'
-import { profileApi, type PaymentMethod, type PaymentMethodCreate } from '@/lib/api/profile'
+import { profileApi, type PaymentMethodCreate } from '@/lib/api/profile'
 
 export function PaymentOptionsTab() {
-  const [cards, setCards] = useState<PaymentMethod[]>([])
-  const [loading, setLoading] = useState(true)
+  const qc = useQueryClient()
   const [showAdd, setShowAdd] = useState(false)
 
-  const load = () => {
-    setLoading(true)
-    profileApi.listPaymentMethods().then(setCards).finally(() => setLoading(false))
-  }
+  const { data: cards = [], isLoading } = useQuery({
+    queryKey: ['payment-methods'],
+    queryFn: profileApi.listPaymentMethods,
+  })
 
-  useEffect(() => { load() }, [])
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['payment-methods'] })
 
   const handleSetDefault = async (id: string) => {
     await profileApi.setDefaultPaymentMethod(id)
-    load()
+    invalidate()
   }
 
   const handleRemove = async (id: string) => {
     await profileApi.removePaymentMethod(id)
-    load()
+    invalidate()
   }
 
   const handleAddCard = async (data: PaymentMethodCreate) => {
     await profileApi.addPaymentMethod(data)
-    load()
+    invalidate()
+    setShowAdd(false)
   }
 
-  if (loading) {
+  if (isLoading) {
     return <div style={{ padding: '32px', textAlign: 'center', color: '#9CA3AF' }}>Loading…</div>
   }
 
@@ -52,7 +53,6 @@ export function PaymentOptionsTab() {
           />
         ))}
 
-        {/* Add New Card tile */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <button
             onClick={() => setShowAdd(true)}

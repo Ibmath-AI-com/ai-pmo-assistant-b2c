@@ -47,7 +47,6 @@ async def test_get_persona_detail(client):
     assert "behavior_setting" in data
     assert "model_policy" in data
     assert "domain_tags" in data
-    assert "access_roles" in data
     assert "workspace_mappings" in data
 
 

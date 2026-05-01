@@ -2,7 +2,8 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import TEXT, String, DateTime, func
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -16,7 +17,7 @@ class ConnectorSource(Base):
     knowledge_collection_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     connector_type: Mapped[str] = mapped_column(String(50), nullable=False)  # google_drive | onedrive | dropbox
     connector_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    config_json: Mapped[dict | None] = mapped_column(JSONB)
+    config_json: Mapped[dict | None] = mapped_column(JSON)
     sync_status: Mapped[str] = mapped_column(String(20), nullable=False, default="idle", server_default="idle")
     last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active", server_default="active")
