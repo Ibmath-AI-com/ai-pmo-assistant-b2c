@@ -25,6 +25,7 @@ from .persona import (
     PersonaWorkspaceMapping,
 )
 from .skill import Skill, SkillPersonaMapping
+from .template import CustomizeTemplate, GeneratedDocument, Template, TemplateFamily, TemplateFileMapping, TemplateVersion
 
 __all__ = [
     "Base",
@@ -64,4 +65,10 @@ __all__ = [
     "PersonaAccessRole",
     "Skill",
     "SkillPersonaMapping",
+    "Template",
+    "TemplateFamily",
+    "TemplateVersion",
+    "TemplateFileMapping",
+    "CustomizeTemplate",
+    "GeneratedDocument",
 ]

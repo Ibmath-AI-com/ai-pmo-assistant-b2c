@@ -9,6 +9,7 @@ import { PersonaWizardPage } from './personas/PersonaWizardPage'
 import { AdminDashboard } from './admin/AdminDashboard'
 import { LoginPage } from './auth/LoginPage'
 import { RegisterPage } from './auth/RegisterPage'
+import { TemplatesPage } from './templates/TemplatesPage'
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
       { path: 'personas/new', element: <PersonaWizardPage /> },
       { path: 'personas/:id/view', element: <PersonaWizardPage /> },
       { path: 'personas/:id/edit', element: <PersonaWizardPage /> },
+      { path: 'templates', element: <TemplatesPage /> },
       { path: 'admin/*', element: <AdminDashboard /> },
     ],
   },

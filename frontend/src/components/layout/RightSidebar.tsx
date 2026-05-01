@@ -11,11 +11,11 @@ const sectionHeaderStyle: React.CSSProperties = {
 }
 
 const knowledgeItems = [
-  'PMBOK Guide v7',
-  'Company Policies',
-  'Project Templates',
-  'Risk Framework',
-  'Strategy Playbook',
+  { label: 'PMBOK Guide v7', link: null },
+  { label: 'Company Policies', link: null },
+  { label: 'Project Templates', link: '/templates' },
+  { label: 'Risk Framework', link: null },
+  { label: 'Strategy Playbook', link: null },
 ]
 
 export function RightSidebar() {
@@ -46,7 +46,7 @@ export function RightSidebar() {
         <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
           {knowledgeItems.map((item) => (
             <li
-              key={item}
+              key={item.label}
               className="flex items-center gap-2 cursor-pointer transition-colors"
               style={{
                 padding: '8px 16px',
@@ -61,7 +61,13 @@ export function RightSidebar() {
                 className="h-1.5 w-1.5 rounded-full shrink-0"
                 style={{ backgroundColor: '#9CA3AF' }}
               />
-              {item}
+              {item.link ? (
+                <NavLink to={item.link} style={{ color: 'inherit', textDecoration: 'none' }}>
+                  {item.label}
+                </NavLink>
+              ) : (
+                item.label
+              )}
             </li>
           ))}
         </ul>
