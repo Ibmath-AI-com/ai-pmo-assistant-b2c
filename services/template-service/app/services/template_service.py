@@ -42,7 +42,7 @@ class TemplateService:
         )
         db.add(template)
         await db.flush()
-        return template
+        return await self.get_by_id(db, template.template_id)
 
     async def list(
         self,
@@ -86,13 +86,13 @@ class TemplateService:
             if field in data:
                 setattr(template, field, data[field])
         await db.flush()
-        return template
+        return await self.get_by_id(db, template_id)
 
     async def update_status(self, db: AsyncSession, template_id: uuid.UUID, new_status: str, updated_by: uuid.UUID, organization_id: uuid.UUID) -> Template:
         template = await self.get(db, template_id, organization_id)
         template.status = new_status
         await db.flush()
-        return template
+        return await self.get_by_id(db, template_id)
 
     async def _snapshot_version(self, db: AsyncSession, template: Template, created_by: uuid.UUID) -> TemplateVersion:
         stmt = select(TemplateVersion).where(TemplateVersion.template_id == template.template_id)
@@ -149,7 +149,7 @@ class TemplateService:
         await self._snapshot_version(db, template, updated_by)
         template.template_body = version.template_body
         await db.flush()
-        return template
+        return await self.get_by_id(db, template_id)
 
     # --- File mappings ---
 
@@ -214,4 +214,5 @@ class TemplateService:
             if field in data:
                 setattr(custom, field, data[field])
         await db.flush()
+        await db.refresh(custom)
         return custom
