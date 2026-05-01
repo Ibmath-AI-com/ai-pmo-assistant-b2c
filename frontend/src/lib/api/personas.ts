@@ -6,7 +6,6 @@ export interface Persona {
   persona_name: string
   persona_category: string
   short_description: string | null
-  organization_id: string | null
   user_id: string | null
   avatar_file_id: string | null
   is_system_persona: boolean
@@ -19,7 +18,6 @@ export interface PersonaDetail extends Persona {
   behavior_setting: BehaviorSetting | null
   model_policy: ModelPolicy | null
   domain_tags: DomainTag[]
-  access_roles: AccessRole[]
   workspace_mappings: WorkspaceMapping[]
 }
 
@@ -52,11 +50,6 @@ export interface DomainTag {
   tag_type: string
 }
 
-export interface AccessRole {
-  persona_access_role_id: string
-  user_id: string | null
-}
-
 export interface WorkspaceMapping {
   persona_workspace_mapping_id: string
   workspace_id: string
@@ -66,7 +59,6 @@ export interface WorkspaceMapping {
 }
 
 export interface PersonaListFilters {
-  organization_id?: string
   category?: string
   status?: string
 }
@@ -76,7 +68,6 @@ export interface PersonaCreateRequest {
   persona_name: string
   persona_category: string
   short_description?: string
-  organization_id?: string
 }
 
 export interface BehaviorUpdateRequest {

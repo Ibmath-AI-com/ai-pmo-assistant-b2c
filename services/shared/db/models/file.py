@@ -14,7 +14,6 @@ class File(Base):
     file_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    organization_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     uploaded_by_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     original_file_name: Mapped[str] = mapped_column(String(500), nullable=False)
     mime_type: Mapped[str | None] = mapped_column(String(100))
@@ -43,7 +42,6 @@ class FileVersion(Base):
         ForeignKey("file.file_id"),
         nullable=False,
     )
-    organization_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     uploaded_by_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     version_no: Mapped[int] = mapped_column(INTEGER, nullable=False)
     file_size_bytes: Mapped[int | None] = mapped_column(BIGINT)

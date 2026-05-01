@@ -34,11 +34,9 @@ async def test_get_workspace_detail(client):
     resp = await client.get(f"/api/v1/workspaces/{ws_id}")
     assert resp.status_code == 200
     data = resp.json()
-    assert "members" in data
     assert "settings" in data
     assert "tags" in data
-    assert len(data["members"]) == 1  # creator auto-added as owner
-    assert data["members"][0]["member_role"] == "owner"
+    assert "content_entities" in data
 
 
 @pytest.mark.asyncio
@@ -57,28 +55,6 @@ async def test_deactivate_workspace(client):
     resp = await client.patch(f"/api/v1/workspaces/{ws_id}/status", json={"status": "inactive"})
     assert resp.status_code == 200
     assert resp.json()["status"] == "inactive"
-
-
-@pytest.mark.asyncio
-async def test_add_and_remove_member(client, make_user):
-    create_resp = await client.post("/api/v1/workspaces", json={"workspace_name": "Member WS"})
-    ws_id = create_resp.json()["workspace_id"]
-    user_id = str(await make_user())
-
-    add_resp = await client.post(f"/api/v1/workspaces/{ws_id}/members", json={
-        "user_id": user_id,
-        "member_role": "admin",
-    })
-    assert add_resp.status_code == 201
-    assert add_resp.json()["member_role"] == "admin"
-
-    detail = await client.get(f"/api/v1/workspaces/{ws_id}")
-    members = detail.json()["members"]
-    member_ids = [m["user_id"] for m in members]
-    assert user_id in member_ids
-
-    del_resp = await client.delete(f"/api/v1/workspaces/{ws_id}/members/{user_id}")
-    assert del_resp.status_code == 204
 
 
 @pytest.mark.asyncio

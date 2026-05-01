@@ -25,21 +25,21 @@ async def create_collection(db: AsyncSession, data: dict) -> KnowledgeCollection
     return collection
 
 
-async def list_collections(db: AsyncSession, organization_id: UUID) -> list[KnowledgeCollection]:
+async def list_collections(db: AsyncSession, user_id: UUID) -> list[KnowledgeCollection]:
     result = await db.execute(
         select(KnowledgeCollection).where(
-            KnowledgeCollection.organization_id == organization_id,
+            KnowledgeCollection.user_id == user_id,
             KnowledgeCollection.status != "deleted",
         )
     )
     return list(result.scalars().all())
 
 
-async def get_collection(db: AsyncSession, collection_id: UUID, organization_id: UUID) -> KnowledgeCollection:
+async def get_collection(db: AsyncSession, collection_id: UUID, user_id: UUID) -> KnowledgeCollection:
     result = await db.execute(
         select(KnowledgeCollection).where(
             KnowledgeCollection.knowledge_collection_id == collection_id,
-            KnowledgeCollection.organization_id == organization_id,
+            KnowledgeCollection.user_id == user_id,
         )
     )
     collection = result.scalar_one_or_none()
@@ -59,9 +59,9 @@ async def get_collection_document_count(db: AsyncSession, collection_id: UUID) -
 
 
 async def update_collection(
-    db: AsyncSession, collection_id: UUID, organization_id: UUID, data: dict
+    db: AsyncSession, collection_id: UUID, user_id: UUID, data: dict
 ) -> KnowledgeCollection:
-    collection = await get_collection(db, collection_id, organization_id)
+    collection = await get_collection(db, collection_id, user_id)
     for key, value in data.items():
         setattr(collection, key, value)
     await db.flush()
@@ -81,7 +81,7 @@ async def create_document(db: AsyncSession, data: dict) -> KnowledgeDocument:
 
 async def list_documents(
     db: AsyncSession,
-    organization_id: UUID,
+    user_id: UUID,
     collection_id: UUID | None = None,
     search: str | None = None,
     document_type: str | None = None,
@@ -99,7 +99,7 @@ async def list_documents(
         sa_select(KnowledgeDocument)
         .join(KnowledgeCollection)
         .where(
-            KnowledgeCollection.organization_id == organization_id,
+            KnowledgeCollection.user_id == user_id,
             KnowledgeDocument.status != "deleted",
         )
         .options(
@@ -160,14 +160,14 @@ async def list_documents(
 
 
 async def get_document(
-    db: AsyncSession, document_id: UUID, organization_id: UUID
+    db: AsyncSession, document_id: UUID, user_id: UUID
 ) -> KnowledgeDocument:
     stmt = (
         select(KnowledgeDocument)
         .join(KnowledgeCollection)
         .where(
             KnowledgeDocument.knowledge_document_id == document_id,
-            KnowledgeCollection.organization_id == organization_id,
+            KnowledgeCollection.user_id == user_id,
         )
         .options(
             selectinload(KnowledgeDocument.governance),
@@ -190,9 +190,9 @@ async def get_document_chunk_count(db: AsyncSession, document_id: UUID) -> int:
 
 
 async def update_document(
-    db: AsyncSession, document_id: UUID, organization_id: UUID, data: dict
+    db: AsyncSession, document_id: UUID, user_id: UUID, data: dict
 ) -> KnowledgeDocument:
-    document = await get_document(db, document_id, organization_id)
+    document = await get_document(db, document_id, user_id)
     for key, value in data.items():
         setattr(document, key, value)
     await db.flush()
@@ -201,9 +201,9 @@ async def update_document(
 
 
 async def change_document_status(
-    db: AsyncSession, document_id: UUID, organization_id: UUID, new_status: str
+    db: AsyncSession, document_id: UUID, user_id: UUID, new_status: str
 ) -> KnowledgeDocument:
-    document = await get_document(db, document_id, organization_id)
+    document = await get_document(db, document_id, user_id)
     document.status = new_status
     await db.flush()
     await db.refresh(document)

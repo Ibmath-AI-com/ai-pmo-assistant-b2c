@@ -72,7 +72,9 @@ jobs:
           - persona-service
           - knowledge-service
           - template-service
-          - admin-service
+          - project-service
+          - chat-service
+          - ai-orchestrator
           - gateway
 
     steps:
@@ -108,12 +110,19 @@ jobs:
           sys.path.insert(0, "services/shared")
           from sqlalchemy.ext.asyncio import create_async_engine
           from db.models.base import Base
-          import db.models.organization
           import db.models.user
-          import db.models.role
           import db.models.session
-          import db.models.knowledge
+          import db.models.subscription
           import db.models.file
+          import db.models.knowledge
+          import db.models.workspace
+          import db.models.persona
+          import db.models.skill
+          import db.models.project
+          import db.models.chat
+          import db.models.ai
+          import db.models.prompt
+          import db.models.template
 
           async def main():
               engine = create_async_engine(

@@ -18,8 +18,8 @@ function Badge({ label, active }: { label: string; active: boolean }) {
   return (
     <div
       style={{
-        width: '62px',
-        height: '52px',
+        width: '72px',
+        height: '62px',
         borderRadius: '10px',
         border: '1.5px solid #BFDBFE',
         backgroundColor: '#FFFFFF',

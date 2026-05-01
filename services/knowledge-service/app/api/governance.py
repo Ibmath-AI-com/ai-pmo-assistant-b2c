@@ -16,7 +16,6 @@ router = APIRouter()
 
 class GovernanceUpsert(BaseModel):
     classification_level: str
-    department: str | None = None
     document_owner: str | None = None
     effective_date: date | None = None
     review_date: date | None = None
@@ -30,7 +29,6 @@ class GovernanceResponse(BaseModel):
     knowledge_document_governance_id: UUID
     knowledge_document_id: UUID
     classification_level: str | None
-    department: str | None
     document_owner: str | None
     effective_date: date | None
     review_date: date | None
@@ -50,7 +48,7 @@ async def upsert_governance(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     # Verify document exists and belongs to org
-    await get_document(db, document_id, current_user.organization_id)
+    await get_document(db, document_id, current_user.user_id)
 
     result = await db.execute(
         select(KnowledgeDocumentGovernance).where(

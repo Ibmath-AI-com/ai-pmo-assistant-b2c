@@ -40,7 +40,6 @@ async def upload_file(
     )
 
     record = File(
-        organization_id=current_user.organization_id,
         uploaded_by_id=current_user.user_id,
         original_file_name=file.filename or "upload",
         mime_type=file.content_type,

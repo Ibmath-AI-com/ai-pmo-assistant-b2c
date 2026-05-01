@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Bot, Zap, Clock, Plus } from 'lucide-react'
+import { ProjectsSidebarWidget } from '@/components/projects/ProjectsSidebarWidget'
 
 const sectionHeaderStyle: React.CSSProperties = {
   background: 'linear-gradient(135deg, #1E40AF, #1E293B)',
@@ -39,13 +40,15 @@ export function Sidebar() {
     <aside
       className="fixed left-0 z-40 overflow-y-auto"
       style={{
-        top: '104px',
+        top: '114px',
         width: '240px',
-        height: 'calc(100vh - 104px)',
+        height: 'calc(100vh - 114px)',
         backgroundColor: '#FFFFFF',
         borderRight: '1px solid #E5E7EB',
       }}
     >
+      <ProjectsSidebarWidget />
+
       {sections.map((section) => (
         <div key={section.id} className="mb-4">
           {/* Section header */}

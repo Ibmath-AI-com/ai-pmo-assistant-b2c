@@ -34,8 +34,8 @@ export function useLogin() {
 export function useRegister() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isSuccess, setIsSuccess] = useState(false)
   const { setTokens, setUser } = useAuthStore()
-  const navigate = useNavigate()
 
   const register = async (data: RegisterRequest) => {
     setLoading(true)
@@ -45,7 +45,7 @@ export function useRegister() {
       setTokens(res.access_token, res.refresh_token)
       const user = await authApi.me()
       setUser(user)
-      navigate('/')
+      setIsSuccess(true)
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
@@ -56,7 +56,7 @@ export function useRegister() {
     }
   }
 
-  return { register, loading, error }
+  return { register, loading, error, isSuccess }
 }
 
 export function useLogout() {

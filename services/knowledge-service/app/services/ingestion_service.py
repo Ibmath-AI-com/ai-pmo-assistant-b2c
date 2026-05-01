@@ -129,9 +129,10 @@ async def _run_pipeline_async(
                 )
 
                 # 7. Save new chunks
+                saved_chunks: list[DocumentChunk] = []
                 job.total_chunks = len(chunks)
                 for chunk in chunks:
-                    db.add(DocumentChunk(
+                    doc_chunk = DocumentChunk(
                         knowledge_document_id=document_id,
                         chunk_no=chunk.chunk_no,
                         chunk_title=chunk.chunk_title,
@@ -139,9 +140,16 @@ async def _run_pipeline_async(
                         token_count=chunk.token_count,
                         processing_status="completed",
                         parent_chunk_id=chunk.parent_chunk_id,
-                    ))
+                    )
+                    db.add(doc_chunk)
+                    saved_chunks.append(doc_chunk)
                     job.processed_chunks = (job.processed_chunks or 0) + 1
                     await db.flush()
+
+                # 7.5. Generate and store embeddings (best-effort — won't fail the pipeline)
+                from app.services.embedding_service import embed_chunks
+                chunk_ids = [c.document_chunk_id for c in saved_chunks]
+                await embed_chunks(db, document_id, chunk_ids)
 
                 # 8. Mark job completed
                 job.job_status = "completed"

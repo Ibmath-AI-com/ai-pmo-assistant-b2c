@@ -121,7 +121,7 @@ async def create_template(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    template = await _svc.create(db, body.model_dump(), user.user_id, user.organization_id)
+    template = await _svc.create(db, body.model_dump(), user.user_id)
     await db.commit()
     await publish_event("template.created", {"template_id": str(template.template_id)})
     return _template_out(template, detail=True)
@@ -134,7 +134,7 @@ async def list_templates(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    templates = await _svc.list(db, user.organization_id, status, family_id)
+    templates = await _svc.list(db, user.user_id, status, family_id)
     return [_template_out(t) for t in templates]
 
 
@@ -144,7 +144,7 @@ async def get_template(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    template = await _svc.get(db, template_id, user.organization_id)
+    template = await _svc.get(db, template_id)
     return _template_out(template, detail=True)
 
 
@@ -155,7 +155,7 @@ async def update_template(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    template = await _svc.update(db, template_id, body.model_dump(exclude_none=True), user.user_id, user.organization_id)
+    template = await _svc.update(db, template_id, body.model_dump(exclude_none=True), user.user_id)
     await db.commit()
     await publish_event("template.updated", {"template_id": str(template.template_id)})
     return _template_out(template, detail=True)
@@ -168,7 +168,7 @@ async def update_status(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    template = await _svc.update_status(db, template_id, body.status, user.user_id, user.organization_id)
+    template = await _svc.update_status(db, template_id, body.status, user.user_id)
     await db.commit()
     return _template_out(template)
 
@@ -181,7 +181,7 @@ async def list_versions(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    versions = await _svc.list_versions(db, template_id, user.organization_id)
+    versions = await _svc.list_versions(db, template_id)
     return [_version_out(v) for v in versions]
 
 
@@ -191,7 +191,7 @@ async def get_latest_version(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    versions = await _svc.list_versions(db, template_id, user.organization_id)
+    versions = await _svc.list_versions(db, template_id)
     if not versions:
         raise HTTPException(status_code=404, detail="No versions found for this template")
     return _version_out(versions[0])
@@ -204,7 +204,7 @@ async def get_version(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    version = await _svc.get_version(db, template_id, version_id, user.organization_id)
+    version = await _svc.get_version(db, template_id, version_id)
     return _version_out(version)
 
 
@@ -215,7 +215,7 @@ async def save_version(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    version = await _svc.save_version(db, template_id, body.model_dump(exclude_none=True), user.user_id, user.organization_id)
+    version = await _svc.save_version(db, template_id, body.model_dump(exclude_none=True), user.user_id)
     await db.commit()
     await publish_event("template.version.created", {"template_id": str(template_id), "version_id": str(version.template_version_id)})
     return _version_out(version)
@@ -228,7 +228,7 @@ async def restore_version(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    template = await _svc.restore_version(db, template_id, version_id, user.user_id, user.organization_id)
+    template = await _svc.restore_version(db, template_id, version_id, user.user_id)
     await db.commit()
     return _template_out(template, detail=True)
 
@@ -243,7 +243,7 @@ async def set_file_mappings(
     user: CurrentUser = Depends(get_current_user),
 ):
     mappings = await _svc.set_file_mappings(
-        db, template_id, [m.model_dump() for m in body.mappings], user.organization_id
+        db, template_id, [m.model_dump() for m in body.mappings]
     )
     await db.commit()
     return [

@@ -43,6 +43,7 @@ export const useCollections = () =>
   useQuery({
     queryKey: knowledgeKeys.collections,
     queryFn: fetchCollections,
+    staleTime: 1000 * 60 * 5, // 5 min — collections rarely change
   })
 
 export const useCollection = (id: string) =>
@@ -50,6 +51,7 @@ export const useCollection = (id: string) =>
     queryKey: knowledgeKeys.collection(id),
     queryFn: () => fetchCollection(id),
     enabled: !!id,
+    staleTime: 1000 * 60 * 5,
   })
 
 export const useCreateCollection = () => {
@@ -69,6 +71,7 @@ export const useDocuments = (filters: DocumentFilters = {}) =>
   useQuery({
     queryKey: knowledgeKeys.documents(filters),
     queryFn: () => fetchDocuments(filters),
+    staleTime: 1000 * 60 * 1, // 1 min — show cached list instantly on re-navigation
   })
 
 export const useDocument = (id: string) =>
@@ -76,6 +79,7 @@ export const useDocument = (id: string) =>
     queryKey: knowledgeKeys.document(id),
     queryFn: () => fetchDocument(id),
     enabled: !!id,
+    staleTime: 1000 * 60 * 2,
   })
 
 // ─── Document Mutations ───────────────────────────────────────────────────────

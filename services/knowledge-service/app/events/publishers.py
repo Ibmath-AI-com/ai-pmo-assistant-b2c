@@ -15,12 +15,12 @@ async def _publish(event_type: str, payload: dict) -> None:
         pass
 
 
-async def publish_collection_created(collection_id: UUID, organization_id: UUID | None) -> None:
+async def publish_collection_created(collection_id: UUID, user_id: UUID | None) -> None:
     await _publish(
         "knowledge.collection.created",
         {
             "knowledge_collection_id": str(collection_id),
-            "organization_id": str(organization_id) if organization_id else None,
+            "user_id": str(user_id) if user_id else None,
         },
     )
 

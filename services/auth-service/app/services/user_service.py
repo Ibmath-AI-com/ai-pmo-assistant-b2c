@@ -10,10 +10,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from db.models.user import User, UserProfile
+from db.models.user import User
 
 
-async def get_users(db: AsyncSession, org_id: UUID | None = None, skip: int = 0, limit: int = 50) -> list[User]:
+async def get_users(db: AsyncSession, skip: int = 0, limit: int = 50) -> list[User]:
     query = select(User).options(selectinload(User.profile)).offset(skip).limit(limit)
     result = await db.execute(query)
     return list(result.scalars().all())

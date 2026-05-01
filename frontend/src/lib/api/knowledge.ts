@@ -14,7 +14,6 @@ export interface KnowledgeCollection {
 
 export interface DocumentGovernance {
   classification_level: 'Public' | 'Internal' | 'Confidential' | 'Restricted'
-  department: string | null
   document_owner: string | null
   effective_date: string | null
   review_date: string | null
@@ -59,7 +58,6 @@ export interface DocumentListItem extends KnowledgeDocument {
 
 export interface GovernanceUpsert {
   classification_level: 'Public' | 'Internal' | 'Confidential' | 'Restricted'
-  department?: string
   document_owner?: string
   effective_date?: string
   review_date?: string
@@ -84,6 +82,7 @@ export interface DocumentCreate {
   document_type?: string
   knowledge_collection_id: string
   summary_description?: string
+  version_number?: string
   source_code?: string
 }
 

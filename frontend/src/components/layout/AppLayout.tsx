@@ -24,9 +24,9 @@ export function AppLayout() {
         style={{
           marginLeft: '240px',
           marginRight: '240px',
-          marginTop: '104px',
-          minHeight: 'calc(100vh - 104px)',
-          padding: '24px',
+          marginTop: '114px',
+          minHeight: 'calc(100vh - 114px)',
+          padding: '0 10px',
           backgroundColor: '#F1F5F9',
         }}
       >

@@ -1,18 +1,15 @@
 import { useState } from 'react'
 import { appTheme, inputStyle, sectionLabelStyle } from '@/lib/theme'
-import { useUpdateGovernance, useUpdateDocument } from '@/lib/hooks/useKnowledge'
 import type { GovernanceData, WizardAction } from '../AddDocumentWizard'
 
 interface GovernanceStepProps {
   data: GovernanceData
-  documentId: string
   dispatch: React.Dispatch<WizardAction>
   onBack: () => void
   onNext: () => void
 }
 
 const CLASSIFICATION_LEVELS = ['Public', 'Internal', 'Confidential', 'Restricted'] as const
-const DEPARTMENTS = ['HR', 'Finance', 'Legal', 'IT', 'Operations', 'Product', 'Sales', 'Marketing', 'Other']
 
 const selectStyle: React.CSSProperties = {
   ...inputStyle,
@@ -24,12 +21,8 @@ const selectStyle: React.CSSProperties = {
   paddingRight: '32px',
 }
 
-export function GovernanceStep({ data, documentId, dispatch, onBack, onNext }: GovernanceStepProps) {
+export function GovernanceStep({ data, dispatch, onBack, onNext }: GovernanceStepProps) {
   const [errors, setErrors] = useState<{ classification_level?: string }>({})
-  const [apiError, setApiError] = useState<string | null>(null)
-
-  const updateGovernance = useUpdateGovernance()
-  const updateDocument = useUpdateDocument()
 
   const set = (key: keyof GovernanceData) => (value: string) =>
     dispatch({ type: 'SET_GOVERNANCE', data: { [key]: value } })
@@ -41,49 +34,13 @@ export function GovernanceStep({ data, documentId, dispatch, onBack, onNext }: G
     return Object.keys(errs).length === 0
   }
 
-  const handleNext = async () => {
-    if (!validate()) return
-    setApiError(null)
-
-    try {
-      await Promise.all([
-        updateGovernance.mutateAsync({
-          id: documentId,
-          data: {
-            classification_level: data.classification_level as 'Public' | 'Internal' | 'Confidential' | 'Restricted',
-            department: data.department || undefined,
-            document_owner: data.document_owner || undefined,
-            effective_date: data.effective_date || undefined,
-            review_date: data.review_date || undefined,
-          },
-        }),
-        data.version_number
-          ? updateDocument.mutateAsync({ id: documentId, data: { version_number: data.version_number } })
-          : Promise.resolve(),
-      ])
-      onNext()
-    } catch (err: unknown) {
-      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
-      const msg = Array.isArray(detail)
-        ? detail.map((e: { msg?: string }) => e.msg ?? String(e)).join('; ')
-        : typeof detail === 'string'
-          ? detail
-          : 'Failed to save governance. Please try again.'
-      setApiError(msg)
-    }
+  const handleNext = () => {
+    if (validate()) onNext()
   }
-
-  const isLoading = updateGovernance.isPending || updateDocument.isPending
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div style={sectionLabelStyle}>Governance</div>
-
-      {apiError && (
-        <div style={{ padding: '10px 12px', borderRadius: appTheme.radiusInput, backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: appTheme.danger, fontSize: '13px' }}>
-          {apiError}
-        </div>
-      )}
 
       {/* Classification Level */}
       <FieldWrap label="Data Classification Level" required error={errors.classification_level}>
@@ -101,29 +58,16 @@ export function GovernanceStep({ data, documentId, dispatch, onBack, onNext }: G
         </select>
       </FieldWrap>
 
-      {/* Department + Owner */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <FieldWrap label="Department">
-          <select
-            value={data.department}
-            onChange={(e) => set('department')(e.target.value)}
-            style={{ ...selectStyle, color: data.department ? appTheme.textPrimary : appTheme.textPlaceholder }}
-          >
-            <option value="">Select department…</option>
-            {DEPARTMENTS.map((d) => <option key={d} value={d} style={{ color: appTheme.textPrimary }}>{d}</option>)}
-          </select>
-        </FieldWrap>
-
-        <FieldWrap label="Document Owner">
-          <input
-            type="text"
-            value={data.document_owner}
-            onChange={(e) => set('document_owner')(e.target.value)}
-            placeholder="e.g. Jane Smith"
-            style={inputStyle}
-          />
-        </FieldWrap>
-      </div>
+      {/* Owner */}
+      <FieldWrap label="Document Owner">
+        <input
+          type="text"
+          value={data.document_owner}
+          onChange={(e) => set('document_owner')(e.target.value)}
+          placeholder="e.g. Jane Smith"
+          style={inputStyle}
+        />
+      </FieldWrap>
 
       {/* Version */}
       <FieldWrap label="Version Number">
@@ -180,7 +124,6 @@ export function GovernanceStep({ data, documentId, dispatch, onBack, onNext }: G
         <button
           type="button"
           onClick={handleNext}
-          disabled={isLoading}
           style={{
             height: '40px',
             padding: '0 28px',
@@ -190,12 +133,11 @@ export function GovernanceStep({ data, documentId, dispatch, onBack, onNext }: G
             color: '#FFFFFF',
             fontSize: '13px',
             fontWeight: 500,
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            opacity: isLoading ? 0.7 : 1,
+            cursor: 'pointer',
             fontFamily: appTheme.font,
           }}
         >
-          {isLoading ? 'Saving…' : 'Next'}
+          Next
         </button>
       </div>
     </div>

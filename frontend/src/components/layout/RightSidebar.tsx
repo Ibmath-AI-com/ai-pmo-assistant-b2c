@@ -23,9 +23,9 @@ export function RightSidebar() {
     <aside
       className="fixed right-0 z-40 overflow-y-auto"
       style={{
-        top: '104px',
+        top: '114px',
         width: '240px',
-        height: 'calc(100vh - 104px)',
+        height: 'calc(100vh - 114px)',
         backgroundColor: '#FFFFFF',
         borderLeft: '1px solid #E5E7EB',
       }}

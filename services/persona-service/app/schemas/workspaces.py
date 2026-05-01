@@ -26,11 +26,6 @@ class StatusUpdate(BaseModel):
     status: str = Field(..., pattern="^(active|inactive)$")
 
 
-class MemberAdd(BaseModel):
-    user_id: uuid.UUID
-    member_role: str = Field(..., pattern="^(owner|admin|member|viewer)$")
-
-
 class SettingItem(BaseModel):
     setting_key: str = Field(..., max_length=100)
     setting_value: str | None = None

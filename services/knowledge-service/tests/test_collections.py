@@ -77,17 +77,17 @@ async def test_org_isolation(client):
     """Collections created by org1 are not visible when querying as org2."""
     from app.main import app
     from auth.dependencies import get_current_user
-    from tests.conftest import ORG2_ID, make_current_user
+    from tests.conftest import USER2_ID, make_current_user
 
-    col_name = f"Org1Only-{uuid.uuid4().hex[:6]}"
+    col_name = f"User1Only-{uuid.uuid4().hex[:6]}"
     resp = await client.post("/api/v1/knowledge/collections", json={
         "collection_code": f"ISO-{uuid.uuid4().hex[:6]}",
         "collection_name": col_name,
     })
     assert resp.status_code == 201
 
-    # Switch to org2 and verify the collection is not visible
-    app.dependency_overrides[get_current_user] = lambda: make_current_user(org_id=ORG2_ID)
+    # Switch to user2 and verify the collection is not visible
+    app.dependency_overrides[get_current_user] = lambda: make_current_user(user_id=USER2_ID)
     resp2 = await client.get("/api/v1/knowledge/collections")
     app.dependency_overrides[get_current_user] = lambda: make_current_user()  # restore
 

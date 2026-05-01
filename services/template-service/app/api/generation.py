@@ -34,10 +34,9 @@ class PreviewRequest(BaseModel):
 def _doc_out(d) -> dict[str, Any]:
     return {
         "generated_document_id": str(d.generated_document_id),
-        "file_id": str(d.file_id) if d.file_id else None,
-        "generated_output_id": str(d.generated_output_id) if d.generated_output_id else None,
-        "document_format": d.document_format,
-        "generated_by": str(d.generated_by) if d.generated_by else None,
+        "template_id": str(d.template_id) if d.template_id else None,
+        "document_format": d.format,
+        "generated_by": str(d.user_id) if d.user_id else None,
         "created_at": d.created_at.isoformat() if d.created_at else None,
     }
 
@@ -50,13 +49,16 @@ async def generate_document(
 ):
     template = await _svc.get_by_id(db, body.template_id)
 
-    custom = await _svc.get_custom(db, body.template_id, user.organization_id)
+    custom = await _svc.get_custom(db, body.template_id, user.user_id)
     template_body = custom.custom_body if custom else (template.template_body or "")
 
+    title = body.document_name or f"{template.template_name}.{body.output_format}"
     doc_record = GeneratedDocument(
         generated_document_id=uuid.uuid4(),
-        document_format=body.output_format,
-        generated_by=user.user_id,
+        user_id=user.user_id,
+        template_id=body.template_id,
+        title=title,
+        format=body.output_format,
     )
     db.add(doc_record)
     await db.flush()
@@ -73,8 +75,9 @@ async def generate_document(
         elif body.output_format == "pptx":
             tmp_path = export_pptx.create_temp_pptx(body.input_data)
 
-        filename = body.document_name or f"{template.template_name}.{body.output_format}"
+        filename = title
         storage_key = storage_service.upload_generated(tmp_path, filename)
+        doc_record.file_path = storage_key
 
     except Exception as exc:
         await db.commit()
@@ -96,7 +99,7 @@ async def list_generated(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    stmt = select(GeneratedDocument).where(GeneratedDocument.generated_by == user.user_id)
+    stmt = select(GeneratedDocument).where(GeneratedDocument.user_id == user.user_id)
     result = await db.execute(stmt)
     return [_doc_out(d) for d in result.scalars().all()]
 
@@ -109,7 +112,7 @@ async def get_generated(
 ):
     stmt = select(GeneratedDocument).where(
         GeneratedDocument.generated_document_id == doc_id,
-        GeneratedDocument.generated_by == user.user_id,
+        GeneratedDocument.user_id == user.user_id,
     )
     result = await db.execute(stmt)
     doc = result.scalar_one_or_none()
@@ -125,8 +128,8 @@ async def preview_template(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
 ):
-    template = await _svc.get(db, template_id, user.organization_id)
-    custom = await _svc.get_custom(db, template_id, user.organization_id)
+    template = await _svc.get(db, template_id)
+    custom = await _svc.get_custom(db, template_id, user.user_id)
     template_body = custom.custom_body if custom else (template.template_body or "")
     html = render_service.render_to_html(template_body, body.input_data)
     return {"html": html}

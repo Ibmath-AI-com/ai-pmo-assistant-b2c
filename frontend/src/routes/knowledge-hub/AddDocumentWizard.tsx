@@ -1,4 +1,4 @@
-import { useReducer, useEffect } from 'react'
+import { useReducer, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { appTheme } from '@/lib/theme'
 import { WizardStepIndicator } from '@/components/knowledge/WizardStepIndicator'
@@ -6,7 +6,16 @@ import { BasicInfoStep } from './steps/BasicInfoStep'
 import { GovernanceStep } from './steps/GovernanceStep'
 import { KBOptimizationStep } from './steps/KBOptimizationStep'
 import { ExtraSettingsStep } from './steps/ExtraSettingsStep'
-import { useDocument } from '@/lib/hooks/useKnowledge'
+import {
+  useDocument,
+  useCreateDocument,
+  useUpdateDocument,
+  useUploadFile,
+  useUpdateGovernance,
+  useUpdateTags,
+  useUpdateAccess,
+} from '@/lib/hooks/useKnowledge'
+import type { TagUpsert } from '@/lib/api/knowledge'
 
 // ─── State Types (exported so step files can import them) ─────────────────────
 
@@ -21,7 +30,6 @@ export interface BasicInfoData {
 
 export interface GovernanceData {
   classification_level: 'Public' | 'Internal' | 'Confidential' | 'Restricted' | ''
-  department: string
   document_owner: string
   version_number: string
   effective_date: string
@@ -77,7 +85,6 @@ const initialState: WizardState = {
   },
   governance: {
     classification_level: '',
-    department: '',
     document_owner: '',
     version_number: '',
     effective_date: '',
@@ -137,8 +144,17 @@ export function AddDocumentWizard() {
   const isEditMode = !!editId
 
   const [state, dispatch] = useReducer(reducer, initialState)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const { data: existingDoc, isLoading: loadingDoc } = useDocument(editId ?? '')
+
+  const createDocument = useCreateDocument()
+  const updateDocument = useUpdateDocument()
+  const uploadFile = useUploadFile()
+  const updateGovernance = useUpdateGovernance()
+  const updateTags = useUpdateTags()
+  const updateAccess = useUpdateAccess()
 
   useEffect(() => {
     if (!existingDoc) return
@@ -166,7 +182,6 @@ export function AddDocumentWizard() {
         },
         governance: {
           classification_level: (gov?.classification_level as GovernanceData['classification_level']) ?? '',
-          department: gov?.department ?? '',
           document_owner: gov?.document_owner ?? '',
           version_number: existingDoc.version_number ?? '',
           effective_date: gov?.effective_date ?? '',
@@ -200,8 +215,94 @@ export function AddDocumentWizard() {
     if (state.step > 1) dispatch({ type: 'SET_STEP', step: (state.step - 1) as 1 | 2 | 3 | 4 })
   }
 
-  const handleSubmit = () => {
-    navigate('/knowledge-hub')
+  const handleFinalSubmit = async () => {
+    setIsSubmitting(true)
+    setSubmitError(null)
+
+    try {
+      // 1. Upload file (create mode only)
+      let fileId = state.basic.fileId
+      if (!isEditMode && state.basic.file && !fileId) {
+        const formData = new FormData()
+        formData.append('file', state.basic.file)
+        const uploaded = await uploadFile.mutateAsync(formData)
+        fileId = uploaded.file_id
+      }
+
+      // 2. Create or update document
+      let documentId = state.documentId
+      if (!isEditMode) {
+        const doc = await createDocument.mutateAsync({
+          title: state.basic.title.trim(),
+          document_type: state.basic.document_type || undefined,
+          knowledge_collection_id: state.basic.knowledge_collection_id,
+          summary_description: state.basic.summary_description || undefined,
+          version_number: state.governance.version_number || undefined,
+          source_code: fileId ?? undefined,
+        })
+        documentId = doc.knowledge_document_id
+      } else {
+        await updateDocument.mutateAsync({
+          id: documentId!,
+          data: {
+            title: state.basic.title.trim(),
+            document_type: state.basic.document_type || undefined,
+            knowledge_collection_id: state.basic.knowledge_collection_id,
+            summary_description: state.basic.summary_description || undefined,
+            version_number: state.governance.version_number || undefined,
+          },
+        })
+      }
+
+      // 3. Update governance (merges step-2 and step-4 data)
+      await updateGovernance.mutateAsync({
+        id: documentId!,
+        data: {
+          classification_level: state.governance.classification_level as 'Public' | 'Internal' | 'Confidential' | 'Restricted',
+          document_owner: state.governance.document_owner || undefined,
+          effective_date: state.governance.effective_date || undefined,
+          review_date: state.governance.review_date || undefined,
+          allow_external_llm_usage: state.extras.allowLLM,
+          llm_model_id: state.extras.allowLLM && state.extras.llmModelId ? state.extras.llmModelId : undefined,
+          expiry_date: state.extras.setExpiry && state.extras.expiryDate ? state.extras.expiryDate : undefined,
+        },
+      })
+
+      // 4. Update tags (step-3 data)
+      const tags: TagUpsert[] = [
+        ...state.optimization.sdlc.map((v) => ({ tag_name: v, tag_type: 'sdlc' as const })),
+        ...state.optimization.domain.map((v) => ({ tag_name: v, tag_type: 'domain' as const })),
+        ...state.optimization.project_type.map((v) => ({ tag_name: v, tag_type: 'project_type' as const })),
+        ...state.optimization.keywords.map((v) => ({ tag_name: v, tag_type: 'keyword' as const })),
+        ...state.optimization.persona.map((v) => ({ tag_name: `persona:${v}`, tag_type: 'keyword' as const })),
+        ...(state.optimization.priority
+          ? [{ tag_name: `priority:${state.optimization.priority}`, tag_type: 'keyword' as const }]
+          : []),
+      ]
+      if (tags.length > 0) {
+        await updateTags.mutateAsync({ id: documentId!, tags })
+      }
+
+      // 5. Update specific access (step-4 data)
+      if (state.extras.specificAccess && state.extras.specificAccessUserId) {
+        await updateAccess.mutateAsync({
+          id: documentId!,
+          entries: [{ user_id: state.extras.specificAccessUserId, access_type: 'read' }],
+        })
+      }
+
+      navigate('/knowledge-hub')
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = Array.isArray(detail)
+        ? detail.map((e: { msg?: string }) => e.msg ?? String(e)).join('; ')
+        : typeof detail === 'string'
+          ? detail
+          : 'Failed to save document. Please try again.'
+      setSubmitError(msg)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (isEditMode && loadingDoc) {
@@ -261,13 +362,12 @@ export function AddDocumentWizard() {
               data={state.basic}
               dispatch={dispatch}
               onNext={goNext}
-              editDocumentId={isEditMode ? (state.documentId ?? undefined) : undefined}
+              isEditMode={isEditMode}
             />
           )}
           {state.step === 2 && (
             <GovernanceStep
               data={state.governance}
-              documentId={state.documentId ?? ''}
               dispatch={dispatch}
               onBack={goBack}
               onNext={goNext}
@@ -276,7 +376,6 @@ export function AddDocumentWizard() {
           {state.step === 3 && (
             <KBOptimizationStep
               data={state.optimization}
-              documentId={state.documentId ?? ''}
               dispatch={dispatch}
               onBack={goBack}
               onNext={goNext}
@@ -285,11 +384,11 @@ export function AddDocumentWizard() {
           {state.step === 4 && (
             <ExtraSettingsStep
               data={state.extras}
-              documentId={state.documentId ?? ''}
-              classificationLevel={state.governance.classification_level || 'Internal'}
               dispatch={dispatch}
               onBack={goBack}
-              onSubmit={handleSubmit}
+              onSubmit={handleFinalSubmit}
+              isSubmitting={isSubmitting}
+              submitError={submitError}
             />
           )}
         </div>
